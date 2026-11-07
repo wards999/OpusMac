@@ -25,8 +25,16 @@ struct PaneView: View {
                         .font(.system(.body, design: .monospaced)).lineLimit(1).truncationMode(.head)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Picker("", selection: Binding(get: { model.format.viewMode }, set: { model.setViewMode($0) })) {
-                        ForEach(ViewMode.allCases) { mode in Text(mode.displayName).tag(mode) }
-                    }.pickerStyle(.segmented).frame(width: 220)
+                        ForEach(ViewMode.allCases) { mode in
+                            Label(mode.displayName, systemImage: mode.iconName)
+                                .labelStyle(.iconOnly)
+                                .help(mode.displayName)
+                                .tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 160)
+                    .help("View mode")
                     Menu {
                         Button("Remember View for this Folder") { model.rememberCurrentFormat() }
                         Button("Clear Format for this Folder") { model.clearFormat() }

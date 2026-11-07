@@ -16,6 +16,15 @@ enum ViewMode: String, Codable, CaseIterable, Identifiable {
         case .thumbnails:  return "Thumbnails"
         }
     }
+    
+    var iconName: String {
+        switch self {
+        case .details:     return "list.bullet.rectangle"
+        case .icons:       return "square.grid.2x2"
+        case .list:        return "list.bullet"
+        case .thumbnails:  return "photo.on.rectangle"
+        }
+    }
 }
 
 struct ColumnConfig: Codable, Identifiable, Hashable {
