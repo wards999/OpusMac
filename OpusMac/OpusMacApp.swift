@@ -71,21 +71,21 @@ struct OpusMacApp: App {
                 
                 Divider()
                 
-                Button("Theme…") {
-                    NotificationCenter.default.post(name: .openThemeSettings, object: nil)
-                }
-                .keyboardShortcut("t", modifiers: [.command, .shift])
-                
-                Divider()
-                
-                Button("Synchronize…") {
+                Button("Synchronize\u{2026}") {
                     NotificationCenter.default.post(name: .openSynchronize, object: nil)
                 }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
                 
-                Button("Path-Pattern Formats…") {
+                Button("Path-Pattern Formats\u{2026}") {
                     NotificationCenter.default.post(name: .openFormatPatterns, object: nil)
                 }
+            }
+            
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings\u{2026}") {
+                    NotificationCenter.default.post(name: .openSettings, object: nil)
+                }
+                .keyboardShortcut(",", modifiers: .command)
             }
         }
     }
@@ -104,4 +104,5 @@ extension Notification.Name {
     static let swapPanes = Notification.Name("swapPanes")
     static let openSynchronize = Notification.Name("openSynchronize")
     static let openFormatPatterns = Notification.Name("openFormatPatterns")
+    static let openSettings = Notification.Name("openSettings")
 }

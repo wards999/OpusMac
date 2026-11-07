@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var showingThemeSettings = false
     @State private var showingSynchronize = false
     @State private var showingFormatPatterns = false
+    @State private var showingSettings = false
     @State private var showViewer = true
     @State private var showLeftPane = true
     @State private var showRightPane = true
@@ -92,6 +93,7 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openThemeSettings)) { _ in showingThemeSettings = true }
         .onReceive(NotificationCenter.default.publisher(for: .openSynchronize)) { _ in showingSynchronize = true }
         .onReceive(NotificationCenter.default.publisher(for: .openFormatPatterns)) { _ in showingFormatPatterns = true }
+        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in showingSettings = true }
         .onReceive(NotificationCenter.default.publisher(for: .copyToOtherPane)) { _ in
             if let src = activeModel, let dst = inactiveModel { OpusCommands.copyToOtherPane(from: src, to: dst) }
         }
@@ -111,6 +113,9 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingFormatPatterns) { FormatPatternsView() }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView().environmentObject(themeManager)
+        }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
                 Text(activeSide == .left ? "Left \u{2192} Right" : "Right \u{2192} Left").font(.caption).foregroundStyle(.secondary)
@@ -143,7 +148,7 @@ struct ContentView: View {
                 Toggle(isOn: $showViewer) { Label("Viewer", systemImage: "eye") }
                 Button { showingSynchronize = true } label: { Label("Synchronize", systemImage: "arrow.triangle.2.circlepath") }
                 Button { showingFormatPatterns = true } label: { Label("Format Patterns", systemImage: "folder.badge.gearshape") }
-                Button { showingThemeSettings = true } label: { Label("Theme", systemImage: "paintpalette") }
+                Button { showingSettings = true } label: { Label("Settings", systemImage: "gear") }
             }
         }
     }
