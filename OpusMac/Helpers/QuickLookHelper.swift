@@ -1,5 +1,5 @@
 import AppKit
-import Quartz
+import QuickLookUI
 import SwiftUI
 
 final class QuickLookHelper: NSObject, QLPreviewControllerDataSource {

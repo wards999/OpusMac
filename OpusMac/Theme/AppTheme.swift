@@ -39,7 +39,7 @@ struct CodableColor: Codable, Equatable {
         red = Double(r); green = Double(g); blue = Double(b); opacity = Double(a)
     }
     var color: Color { Color(.sRGB, red: red, green: green, blue: blue, opacity: opacity) }
-    var nsColor: NSColor { NSColor(sRGBRed: red, green: green, blue: blue, alpha: opacity) }
+    var nsColor: NSColor { NSColor(srgbRed: red, green: green, blue: blue, alpha: opacity) }
 }
 
 @MainActor

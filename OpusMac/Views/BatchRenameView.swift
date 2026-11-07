@@ -1,5 +1,11 @@
 import SwiftUI
 
+struct RenamePreviewRow: Identifiable {
+    let id = UUID()
+    let original: String
+    let newName: String
+}
+
 struct BatchRenameView: View {
     let items: [FileItem]
     var onRename: ([URL: String]) -> Void
@@ -19,8 +25,8 @@ struct BatchRenameView: View {
         var id: String { rawValue }
     }
     
-    private var preview: [(original: String, newName: String)] {
-        items.map { item in (item.name, computeNewName(for: item.name)) }
+    private var preview: [RenamePreviewRow] {
+        items.map { item in RenamePreviewRow(original: item.name, newName: computeNewName(for: item.name)) }
     }
     
     var body: some View {
@@ -43,13 +49,13 @@ struct BatchRenameView: View {
                 }
             }.formStyle(.grouped).padding()
             Divider()
-            Table(preview, columns: {
+            Table(preview) {
                 TableColumn("Original") { row in Text(row.original).lineLimit(1) }
                 TableColumn("New Name") { row in
                     Text(row.newName).lineLimit(1)
                         .foregroundStyle(row.newName != row.original ? .primary : .secondary)
                 }
-            }).frame(minHeight: 200)
+            }.frame(minHeight: 200)
             Divider()
             HStack {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
