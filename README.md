@@ -2,50 +2,49 @@
 
 A dual-pane power-user file manager for macOS, inspired by Directory Opus.
 
-**Repository:** https://github.com/wards999/OpusMac
+**Repo:** https://github.com/wards999/OpusMac
 
 ## Features
 
-- **Dual-pane layout** (resizable)
-- **Per-folder view memory** ("Folder Formats") – remembers view mode, columns, sort order, thumbnail size, hidden files per folder
-- Independent navigation history (Back / Forward / Up) per pane
-- Sortable columns + multiple view modes (Details, Icons, List, Thumbnails)
-- **Drag between panes = Move**, **Option-drag = Copy** (with visual feedback)
-- Themes (System / Light / Dark / Custom colours)
-- Sidebar with Favorites + Volumes
-- Folder Tree foundation
-- Batch Rename foundation
-- No scripting, no FTP
+### Dual-pane core
+- Dual resizable panes with **tabs**
+- **Drag = Move**, **⌥-drag = Copy**
+- **Copy / Move to other pane** (⌘⇧C / ⌘⇧M)
+- Per-folder view memory + **path-pattern formats** (e.g. `~/Pictures` → Icons)
+- Folder Tree + quick favorites
+- Source → Destination indicator
 
-## Requirements
+### Navigation & views
+- Tabs, Back / Forward / Up
+- Details / Icons / List / Thumbnails
+- **Flat View** (recursive)
+- Find-as-you-type filter
+- Columns: Name, Size, Date Modified, Kind, Created
+- **Inline Rename**
+- Viewer pane + Space Quick Look
 
-- macOS 14.0+
-- Xcode 15+ (for local development)
+### Archives
+- Basic **ZIP browsing**
 
-## Getting Started
+### Synchronize
+- Compare left vs right folder
+- Show missing / newer / size-different files
+- Selective one-way sync
 
-### Option A – Open in Xcode
+### File operations
+- New Folder, Trash, Batch Rename
+- Transfer progress + conflict dialog
 
-1. Clone the repo
-2. Install [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
-3. Run `xcodegen generate`
-4. Open `OpusMac.xcodeproj` and Build & Run (⌘R)
+### Polish
+- Themes, status bar, keyboard-centric menus
 
-### Option B – Direct
+## Build
 
-Create a new macOS App project named `OpusMac`, then drag the contents of the `OpusMac/` folder into it.
-
-## Automated Builds & Releases
-
-Every push to `main` triggers a GitHub Actions workflow that:
-
-1. Generates the Xcode project with XcodeGen
-2. Builds a Release archive
-3. Creates a DMG
-4. Uploads the DMG as a workflow artifact
-5. Creates a pre-release on GitHub with the DMG attached
-
-You can also trigger it manually from the **Actions** tab.
+```bash
+brew install xcodegen
+xcodegen generate
+open OpusMac.xcodeproj
+```
 
 ## License
 
