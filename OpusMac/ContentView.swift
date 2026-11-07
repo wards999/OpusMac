@@ -34,15 +34,15 @@ struct ContentView: View {
                         }.buttonStyle(.borderless).font(.caption)
                     }
                     Spacer()
-                }.padding(.horizontal, 8).padding(.vertical, 4)
-                .background(Color(nsColor: .controlBackgroundColor))
+                }
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(themeManager.paneBackground)
                 Divider()
                 FolderTreeView(selectedURL: $treeSelection) { url in activeModel?.navigate(to: url) }
             }
+            .background(themeManager.paneBackground)
             .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
         } detail: {
-            // Use GeometryReader + HStack instead of HSplitView so both panes
-            // reliably receive clicks and fill their space.
             GeometryReader { geo in
                 let viewerWidth: CGFloat = showViewer ? 240 : 0
                 let paneWidth = max(280, (geo.size.width - viewerWidth - 8) / 2)
