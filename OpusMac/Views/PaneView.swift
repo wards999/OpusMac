@@ -48,6 +48,29 @@ struct PaneView: View {
                         },
                         onQuickLook: { item in QuickLookHelper.shared.preview(item: item) }
                     )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    if let error = model.errorMessage, model.items.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "lock.trianglebadge.exclamationmark")
+                                .font(.system(size: 36))
+                                .foregroundStyle(.secondary)
+                            Text("Cannot access folder")
+                                .font(.headline)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button("Grant Access") {
+                                model.requestAccessAndReload()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(themeManager.listBackground)
+                    }
+                    
                     if isTargeted {
                         RoundedRectangle(cornerRadius: 8)
                             .strokeBorder(style: StrokeStyle(lineWidth: 3, dash: [8]))
@@ -61,6 +84,7 @@ struct PaneView: View {
                             }.padding(8)
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .dropDestination(for: URL.self) { urls, _ in
                     handleDrop(urls: urls, model: model); return true
                 } isTargeted: { targeted in
@@ -72,6 +96,9 @@ struct PaneView: View {
                     if !model.selectedItems.isEmpty {
                         Text("\u{2022} \(model.selectedItems.count) selected").font(.caption).foregroundStyle(.secondary)
                     }
+                    if let error = model.errorMessage {
+                        Text(error).font(.caption).foregroundStyle(.red).lineLimit(1)
+                    }
                     Spacer()
                     if isTargeted {
                         Text(dropMode == .move ? "Move" : "Copy").font(.caption.weight(.semibold)).foregroundStyle(themeManager.accent)
@@ -81,8 +108,10 @@ struct PaneView: View {
                 .background(themeManager.paneBackground)
             } else {
                 ContentUnavailableView("No Tab", systemImage: "tab")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(themeManager.listBackground)
         .overlay(RoundedRectangle(cornerRadius: 0).stroke(isActive ? themeManager.accent.opacity(0.7) : Color.clear, lineWidth: 2))
         .contentShape(Rectangle())

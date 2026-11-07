@@ -87,6 +87,10 @@ final class PaneModel: ObservableObject, Identifiable {
         errorMessage = nil
         defer { isLoading = false }
         format = await FormatStore.shared.format(for: currentURL.path)
+        
+        // Reuse a saved bookmark so we do not re-prompt for this folder
+        _ = BookmarkStore.shared.ensureAccess(to: currentURL)
+        
         let fm = FileManager.default
         let options: FileManager.DirectoryEnumerationOptions = format.showHiddenFiles ? [] : [.skipsHiddenFiles]
         do {
@@ -95,10 +99,21 @@ final class PaneModel: ObservableObject, Identifiable {
             } else {
                 let urls = try fm.contentsOfDirectory(at: currentURL, includingPropertiesForKeys: [.isDirectoryKey, .totalFileSizeKey, .contentModificationDateKey, .creationDateKey, .contentTypeKey], options: options)
                 items = sort(urls.compactMap { FileItem.from(url: $0) })
+                // Successful read — remember access for next time
+                BookmarkStore.shared.saveBookmark(for: currentURL)
             }
         } catch {
             items = []
             errorMessage = error.localizedDescription
+        }
+    }
+    
+    /// Called from the UI when the user clicks Grant Access on a failed folder.
+    func requestAccessAndReload() {
+        if let granted = BookmarkStore.shared.requestAccess(for: currentURL) {
+            navigate(to: granted)
+        } else {
+            Task { await loadDirectory(saveCurrentFormat: false) }
         }
     }
     

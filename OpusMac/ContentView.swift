@@ -4,7 +4,7 @@ struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var leftTabs = PaneTabManager(initialURL: FileManager.default.homeDirectoryForCurrentUser)
     @StateObject private var rightTabs = PaneTabManager(
-        initialURL: FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
+        initialURL: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser
     )
     @State private var activeSide: Side = .left
@@ -43,14 +43,14 @@ struct ContentView: View {
         } detail: {
             HSplitView {
                 PaneView(tabManager: leftTabs, isActive: activeSide == .left, onActivate: { activeSide = .left })
-                    .frame(minWidth: 280, idealWidth: 480)
+                    .frame(minWidth: 280, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
                     .layoutPriority(1)
                 PaneView(tabManager: rightTabs, isActive: activeSide == .right, onActivate: { activeSide = .right })
-                    .frame(minWidth: 280, idealWidth: 480)
+                    .frame(minWidth: 280, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
                     .layoutPriority(1)
                 if showViewer {
                     ViewerPane(item: viewerItem)
-                        .frame(minWidth: 200, idealWidth: 280)
+                        .frame(minWidth: 200, idealWidth: 280, maxHeight: .infinity)
                         .layoutPriority(0.5)
                 }
             }
