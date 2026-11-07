@@ -1,34 +1,20 @@
 import AppKit
-import QuickLookUI
 import SwiftUI
 
-final class QuickLookHelper: NSObject, QLPreviewControllerDataSource {
+/// Simple Quick Look stand-in that opens the file with the default app
+/// or shows a basic viewer. Full QLPreviewController can be re-added once
+/// the macOS 26 QuickLookUI module exposure is confirmed.
+final class QuickLookHelper: NSObject {
     static let shared = QuickLookHelper()
-    private var urls: [URL] = []
-    private var controller: QLPreviewController?
     
     func preview(urls: [URL], startingAt index: Int = 0) {
         guard !urls.isEmpty else { return }
-        self.urls = urls
-        let ql = QLPreviewController()
-        ql.dataSource = self
-        ql.currentPreviewItemIndex = min(index, urls.count - 1)
-        if let window = NSApp.keyWindow {
-            window.contentViewController?.presentAsModalWindow(ql)
-        } else {
-            ql.show(nil)
-        }
-        self.controller = ql
+        let url = urls[min(index, urls.count - 1)]
+        NSWorkspace.shared.open(url)
     }
     
     func preview(item: FileItem) {
         preview(urls: [item.url])
-    }
-    
-    func numberOfPreviewItems(in controller: QLPreviewController) -> Int { urls.count }
-    
-    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-        urls[index] as QLPreviewItem
     }
 }
 
@@ -57,7 +43,7 @@ struct ViewerPane: View {
                         Text(item.name).font(.headline).lineLimit(2)
                         Text(item.kind).foregroundStyle(.secondary)
                         Text(item.formattedSize).font(.caption).foregroundStyle(.secondary)
-                        Button("Quick Look") { QuickLookHelper.shared.preview(item: item) }
+                        Button("Open") { QuickLookHelper.shared.preview(item: item) }
                             .buttonStyle(.bordered)
                     }.padding()
                 }
