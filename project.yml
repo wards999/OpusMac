@@ -2,14 +2,14 @@ name: OpusMac
 options:
   bundleIdPrefix: com.example
   deploymentTarget:
-    macOS: "14.0"
-  xcodeVersion: "15.0"
+    macOS: "26.0"
+  xcodeVersion: "26.0"
   createIntermediateGroups: true
 
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
 
 targets:
   OpusMac:
@@ -22,7 +22,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.OpusMac
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
         INFOPLIST_KEY_CFBundleDisplayName: OpusMac
-        INFOPLIST_KEY_LSMinimumSystemVersion: "14.0"
+        INFOPLIST_KEY_LSMinimumSystemVersion: "26.0"
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: false
         CODE_SIGNING_ALLOWED: false

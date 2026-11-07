@@ -31,7 +31,7 @@ struct PaneView: View {
                         Button("Remember View for this Folder") { model.rememberCurrentFormat() }
                         Button("Clear Format for this Folder") { model.clearFormat() }
                         Divider()
-                        Button("Batch Rename\u2026") { if !model.selectedFileItems.isEmpty { showBatchRename = true } }
+                        Button("Batch Rename\u{2026}") { if !model.selectedFileItems.isEmpty { showBatchRename = true } }
                             .disabled(model.selectedItems.isEmpty)
                     } label: { Image(systemName: "slider.horizontal.3") }
                 }
@@ -68,7 +68,7 @@ struct PaneView: View {
                 HStack {
                     Text("\(model.items.count) items").font(.caption).foregroundStyle(.secondary)
                     if !model.selectedItems.isEmpty {
-                        Text("\u2022 \(model.selectedItems.count) selected").font(.caption).foregroundStyle(.secondary)
+                        Text("\u{2022} \(model.selectedItems.count) selected").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     if isTargeted {

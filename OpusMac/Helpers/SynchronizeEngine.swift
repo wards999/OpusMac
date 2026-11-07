@@ -8,7 +8,7 @@ struct SyncItem: Identifiable, Hashable {
     let direction: Direction
     let reason: Reason
     let size: Int64?
-    enum Direction: String { case leftToRight = "\u2192", rightToLeft = "\u2190", both = "\u2194" }
+    enum Direction: String { case leftToRight = "\u{2192}", rightToLeft = "\u{2190}", both = "\u{2194}" }
     enum Reason: String {
         case missingOnRight = "Missing on right"
         case missingOnLeft = "Missing on left"
@@ -28,7 +28,7 @@ final class SynchronizeEngine: ObservableObject {
     
     func compare(left: URL, right: URL) async {
         isScanning = true
-        statusMessage = "Scanning\u2026"
+        statusMessage = "Scanning\u{2026}"
         items = []
         defer {
             isScanning = false

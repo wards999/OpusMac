@@ -19,7 +19,7 @@ struct FileListView: View {
         VStack(spacing: 0) {
             HStack {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Filter\u2026", text: $filterText).textFieldStyle(.plain)
+                TextField("Filter\u{2026}", text: $filterText).textFieldStyle(.plain)
                 if !filterText.isEmpty {
                     Button { filterText = "" } label: {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)

@@ -84,7 +84,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingFormatPatterns) { FormatPatternsView() }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
-                Text(activeSide == .left ? "Left \u2192 Right" : "Right \u2192 Left").font(.caption).foregroundStyle(.secondary)
+                Text(activeSide == .left ? "Left \u{2192} Right" : "Right \u{2192} Left").font(.caption).foregroundStyle(.secondary)
             }
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
