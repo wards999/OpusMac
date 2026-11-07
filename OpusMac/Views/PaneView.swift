@@ -13,7 +13,6 @@ struct PaneView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Path / nav bar (top, like Opus)
             if let model {
                 HStack(spacing: 4) {
                     Button { model.goBack() } label: { Image(systemName: "chevron.left") }
@@ -51,7 +50,6 @@ struct PaneView: View {
                 .onTapGesture { onActivate() }
                 Divider()
                 
-                // File list
                 ZStack {
                     FileListView(model: model, isActive: isActive, onActivate: onActivate,
                         onOpen: { item in
@@ -97,7 +95,6 @@ struct PaneView: View {
                     dropMode = NSEvent.modifierFlags.contains(.option) ? .copy : .move
                 }
                 
-                // Status bar (bottom, like Opus)
                 HStack(spacing: 8) {
                     Text("\(model.items.count) items")
                         .font(.system(size: 10))
@@ -121,7 +118,6 @@ struct PaneView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
-            // Tabs at the bottom (Opus style)
             Divider()
             TabBarView(manager: tabManager, isActive: isActive)
         }
@@ -132,8 +128,6 @@ struct PaneView: View {
                 .stroke(isActive ? themeManager.accent.opacity(0.6) : Color.clear, lineWidth: 1)
                 .allowsHitTesting(false)
         )
-        .contentShape(Rectangle())
-        .onTapGesture { onActivate() }
         .sheet(isPresented: $showBatchRename) {
             if let model, !model.selectedFileItems.isEmpty {
                 BatchRenameView(items: model.selectedFileItems) { mapping in

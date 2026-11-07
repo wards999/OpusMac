@@ -81,12 +81,6 @@ struct FileListView: View {
                             Text(item.name).lineLimit(1)
                         }
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpen(item) }
-                    .draggable(item.url) {
-                        Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
-                            .padding(6).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                    }
                 }
                 .width(min: 120, ideal: model.format.width(for: "name"))
             }
@@ -109,6 +103,9 @@ struct FileListView: View {
         }
         .tableStyle(.inset(alternatesRowBackgrounds: true))
         .onChange(of: model.selectedItems) { _, _ in onActivate() }
+        .onTapGesture(count: 2) {
+            if let item = model.selectedFileItems.first { onOpen(item) }
+        }
         .contextMenu {
             if let item = model.selectedFileItems.first {
                 Button("Open") { onOpen(item) }
@@ -141,7 +138,6 @@ struct FileListView: View {
                         if NSEvent.modifierFlags.contains(.command) { model.toggleSelection(item) }
                         else { model.select(item) }
                     }
-                    .draggable(item.url) { FileIconCell(item: item, size: 48, showThumbnail: false, isSelected: false).opacity(0.9) }
                     .contextMenu {
                         Button("Open") { onOpen(item) }
                         Button("Quick Look") { onQuickLook(item) }
