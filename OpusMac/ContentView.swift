@@ -43,9 +43,15 @@ struct ContentView: View {
         } detail: {
             HSplitView {
                 PaneView(tabManager: leftTabs, isActive: activeSide == .left, onActivate: { activeSide = .left })
+                    .frame(minWidth: 280, idealWidth: 480)
+                    .layoutPriority(1)
                 PaneView(tabManager: rightTabs, isActive: activeSide == .right, onActivate: { activeSide = .right })
+                    .frame(minWidth: 280, idealWidth: 480)
+                    .layoutPriority(1)
                 if showViewer {
-                    ViewerPane(item: viewerItem).frame(minWidth: 180, idealWidth: 260)
+                    ViewerPane(item: viewerItem)
+                        .frame(minWidth: 200, idealWidth: 280)
+                        .layoutPriority(0.5)
                 }
             }
         }

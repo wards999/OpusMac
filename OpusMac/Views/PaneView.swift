@@ -26,7 +26,7 @@ struct PaneView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Picker("", selection: Binding(get: { model.format.viewMode }, set: { model.setViewMode($0) })) {
                         ForEach(ViewMode.allCases) { mode in Text(mode.displayName).tag(mode) }
-                    }.pickerStyle(.segmented).frame(width: 260)
+                    }.pickerStyle(.segmented).frame(width: 220)
                     Menu {
                         Button("Remember View for this Folder") { model.rememberCurrentFormat() }
                         Button("Clear Format for this Folder") { model.clearFormat() }
@@ -37,6 +37,8 @@ struct PaneView: View {
                 }
                 .padding(.horizontal, 10).padding(.vertical, 6)
                 .background(isActive ? themeManager.accent.opacity(0.12) : themeManager.listBackground)
+                .contentShape(Rectangle())
+                .onTapGesture { onActivate() }
                 Divider()
                 ZStack {
                     FileListView(model: model, isActive: isActive, onActivate: onActivate,
@@ -83,6 +85,8 @@ struct PaneView: View {
         }
         .background(themeManager.listBackground)
         .overlay(RoundedRectangle(cornerRadius: 0).stroke(isActive ? themeManager.accent.opacity(0.7) : Color.clear, lineWidth: 2))
+        .contentShape(Rectangle())
+        .onTapGesture { onActivate() }
         .sheet(isPresented: $showBatchRename) {
             if let model, !model.selectedFileItems.isEmpty {
                 BatchRenameView(items: model.selectedFileItems) { mapping in
@@ -95,7 +99,6 @@ struct PaneView: View {
                 }
             }
         }
-        .onAppear { onActivate() }
     }
     
     private func handleDrop(urls: [URL], model: PaneModel) {
