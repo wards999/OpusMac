@@ -31,6 +31,7 @@ final class PaneModel: ObservableObject, Identifiable {
         }
         archiveURL = nil
         guard url != currentURL else { return }
+        // Auto-save format for the folder we're leaving
         Task { await FormatStore.shared.save(format, for: currentURL.path) }
         if historyIndex < history.count - 1 {
             history = Array(history.prefix(historyIndex + 1))
@@ -88,7 +89,6 @@ final class PaneModel: ObservableObject, Identifiable {
         defer { isLoading = false }
         format = await FormatStore.shared.format(for: currentURL.path)
         
-        // Reuse a saved bookmark so we do not re-prompt for this folder
         _ = BookmarkStore.shared.ensureAccess(to: currentURL)
         
         let fm = FileManager.default
@@ -99,7 +99,6 @@ final class PaneModel: ObservableObject, Identifiable {
             } else {
                 let urls = try fm.contentsOfDirectory(at: currentURL, includingPropertiesForKeys: [.isDirectoryKey, .totalFileSizeKey, .contentModificationDateKey, .creationDateKey, .contentTypeKey], options: options)
                 items = sort(urls.compactMap { FileItem.from(url: $0) })
-                // Successful read — remember access for next time
                 BookmarkStore.shared.saveBookmark(for: currentURL)
             }
         } catch {
@@ -108,7 +107,6 @@ final class PaneModel: ObservableObject, Identifiable {
         }
     }
     
-    /// Called from the UI when the user clicks Grant Access on a failed folder.
     func requestAccessAndReload() {
         if let granted = BookmarkStore.shared.requestAccess(for: currentURL) {
             navigate(to: granted)
@@ -156,7 +154,12 @@ final class PaneModel: ObservableObject, Identifiable {
         }
     }
     
-    func rememberCurrentFormat() { Task { await FormatStore.shared.save(format, for: currentURL.path) } }
+    /// Auto-save the current format for this folder. Called whenever the user changes view mode, columns, sort, etc.
+    private func autoSaveFormat() {
+        Task { await FormatStore.shared.save(format, for: currentURL.path) }
+    }
+    
+    func rememberCurrentFormat() { autoSaveFormat() }
     func clearFormat() {
         format = .default
         Task { await FormatStore.shared.clear(for: currentURL.path); await loadDirectory(saveCurrentFormat: false) }
@@ -165,6 +168,7 @@ final class PaneModel: ObservableObject, Identifiable {
         let oldFlat = format.flatView; let oldHidden = format.showHiddenFiles
         format = newFormat
         items = sort(items)
+        autoSaveFormat()
         if newFormat.flatView != oldFlat || newFormat.showHiddenFiles != oldHidden {
             Task { await loadDirectory(saveCurrentFormat: false) }
         }
