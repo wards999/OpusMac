@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct FileListView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var model: PaneModel
     let isActive: Bool
     var onActivate: () -> Void
@@ -47,7 +48,7 @@ struct FileListView: View {
                 }
             }
             .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .background(themeManager.listBackground.opacity(0.8))
             
             Group {
                 switch model.format.viewMode {
@@ -56,9 +57,11 @@ struct FileListView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(themeManager.listBackground)
             .overlay { if model.isLoading { ProgressView().scaleEffect(1.2) } }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(themeManager.listBackground)
         .onKeyPress(.space) {
             if let item = model.selectedFileItems.first { onQuickLook(item); return .handled }
             return .ignored
@@ -144,8 +147,11 @@ struct FileListView: View {
                         Button("Rename") { model.beginRename(item) }
                     }
                 }
-            }.padding(8)
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity)
         }
+        .background(themeManager.listBackground)
     }
 }
 
