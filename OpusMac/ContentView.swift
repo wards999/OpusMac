@@ -27,68 +27,20 @@ struct ContentView: View {
     
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            VStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    ForEach(["Home", "Desktop", "Documents", "Downloads"], id: \.self) { name in
-                        Button(name) {
-                            let home = FileManager.default.homeDirectoryForCurrentUser
-                            let url = name == "Home" ? home : home.appendingPathComponent(name)
-                            activeModel?.navigate(to: url)
-                        }.buttonStyle(.borderless).font(.caption)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(themeManager.paneBackground)
-                Divider()
-                FolderTreeView(selectedURL: $treeSelection) { url in activeModel?.navigate(to: url) }
-            }
-            .background(themeManager.paneBackground)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
+            sidebar
         } detail: {
-            HSplitView {
-                if showLeftPane {
-                    PaneView(
-                        tabManager: leftTabs,
-                        isActive: activeSide == .left,
-                        onActivate: { activeSide = .left },
-                        onSwap: { leftTabs.swapContents(with: rightTabs) },
-                        onClose: { showLeftPane = false; if !showRightPane { showRightPane = true } }
-                    )
-                    .frame(minWidth: 240, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
-                    .layoutPriority(1)
-                }
-                if showRightPane {
-                    PaneView(
-                        tabManager: rightTabs,
-                        isActive: activeSide == .right,
-                        onActivate: { activeSide = .right },
-                        onSwap: { leftTabs.swapContents(with: rightTabs) },
-                        onClose: { showRightPane = false; if !showLeftPane { showLeftPane = true } }
-                    )
-                    .frame(minWidth: 240, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
-                    .layoutPriority(1)
-                }
-                if showViewer {
-                    ViewerPane(item: viewerItem)
-                        .frame(minWidth: 180, idealWidth: 260, maxWidth: 400, maxHeight: .infinity)
-                        .layoutPriority(0.5)
-                }
-            }
+            mainSplit
         }
         .background(themeManager.paneBackground)
-        .overlay {
-            VStack { Spacer(); TransferProgressView().padding() }
-            ConflictDialogView()
-        }
+        .overlay { overlays }
         .onReceive(NotificationCenter.default.publisher(for: .goBack)) { _ in activeModel?.goBack() }
         .onReceive(NotificationCenter.default.publisher(for: .goForward)) { _ in activeModel?.goForward() }
         .onReceive(NotificationCenter.default.publisher(for: .goUp)) { _ in activeModel?.goUp() }
         .onReceive(NotificationCenter.default.publisher(for: .rememberFormat)) { _ in activeModel?.rememberCurrentFormat() }
         .onReceive(NotificationCenter.default.publisher(for: .clearFormat)) { _ in activeModel?.clearFormat() }
         .onReceive(NotificationCenter.default.publisher(for: .filesDidChange)) { _ in
-            if let m = leftTabs.selectedPane { m.navigate(to: m.currentURL) }
-            if let m = rightTabs.selectedPane { m.navigate(to: m.currentURL) }
+            leftTabs.selectedPane?.navigate(to: leftTabs.selectedPane?.currentURL ?? URL(fileURLWithPath: "/"))
+            rightTabs.selectedPane?.navigate(to: rightTabs.selectedPane?.currentURL ?? URL(fileURLWithPath: "/"))
         }
         .onReceive(NotificationCenter.default.publisher(for: .openThemeSettings)) { _ in showingThemeSettings = true }
         .onReceive(NotificationCenter.default.publisher(for: .openSynchronize)) { _ in showingSynchronize = true }
@@ -107,49 +59,116 @@ struct ContentView: View {
         .onChange(of: rightTabs.selectedPane?.selectedItems) { _, _ in updateViewer() }
         .onChange(of: activeSide) { _, _ in updateViewer() }
         .sheet(isPresented: $showingThemeSettings) { ThemeSettingsView().environmentObject(themeManager) }
-        .sheet(isPresented: $showingSynchronize) {
-            if let left = leftTabs.selectedPane?.currentURL, let right = rightTabs.selectedPane?.currentURL {
-                SynchronizeView(leftURL: left, rightURL: right)
-            }
-        }
+        .sheet(isPresented: $showingSynchronize) { syncSheet }
         .sheet(isPresented: $showingFormatPatterns) { FormatPatternsView() }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView().environmentObject(themeManager)
+        .sheet(isPresented: $showingSettings) { SettingsView().environmentObject(themeManager) }
+        .toolbar { toolbarContent }
+    }
+    
+    private var sidebar: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                ForEach(["Home", "Desktop", "Documents", "Downloads"], id: \.self) { name in
+                    Button(name) {
+                        let home = FileManager.default.homeDirectoryForCurrentUser
+                        let url = name == "Home" ? home : home.appendingPathComponent(name)
+                        activeModel?.navigate(to: url)
+                    }.buttonStyle(.borderless).font(.caption)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(themeManager.paneBackground)
+            Divider()
+            FolderTreeView(selectedURL: $treeSelection) { url in activeModel?.navigate(to: url) }
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .navigation) {
-                Text(activeSide == .left ? "Left \u{2192} Right" : "Right \u{2192} Left").font(.caption).foregroundStyle(.secondary)
+        .background(themeManager.paneBackground)
+        .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
+    }
+    
+    private var mainSplit: some View {
+        HSplitView {
+            if showLeftPane {
+                PaneView(
+                    tabManager: leftTabs,
+                    isActive: activeSide == .left,
+                    onActivate: { activeSide = .left },
+                    onSwap: { leftTabs.swapContents(with: rightTabs) },
+                    onClose: { showLeftPane = false; if !showRightPane { showRightPane = true } }
+                )
+                .frame(minWidth: 240, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
+                .layoutPriority(1)
             }
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button {
-                    if let src = activeModel, let dst = inactiveModel { OpusCommands.copyToOtherPane(from: src, to: dst) }
-                } label: { Label("Copy", systemImage: "doc.on.doc") }
-                .disabled(activeModel?.selectedItems.isEmpty ?? true)
-                Button {
-                    if let src = activeModel, let dst = inactiveModel { OpusCommands.moveToOtherPane(from: src, to: dst) }
-                } label: { Label("Move", systemImage: "arrow.right.doc.on.clipboard") }
-                .disabled(activeModel?.selectedItems.isEmpty ?? true)
-                Button { activeTabManager.addTab() } label: { Label("New Tab", systemImage: "plus.rectangle.on.rectangle") }
-                Button {
-                    Task {
-                        if let model = activeModel {
-                            _ = try? FileOperations.createFolder(in: model.currentURL)
-                            model.navigate(to: model.currentURL)
-                        }
+            if showRightPane {
+                PaneView(
+                    tabManager: rightTabs,
+                    isActive: activeSide == .right,
+                    onActivate: { activeSide = .right },
+                    onSwap: { leftTabs.swapContents(with: rightTabs) },
+                    onClose: { showRightPane = false; if !showLeftPane { showLeftPane = true } }
+                )
+                .frame(minWidth: 240, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
+                .layoutPriority(1)
+            }
+            if showViewer {
+                ViewerPane(item: viewerItem)
+                    .frame(minWidth: 180, idealWidth: 260, maxWidth: 400, maxHeight: .infinity)
+                    .layoutPriority(0.5)
+            }
+        }
+    }
+    
+    private var overlays: some View {
+        ZStack {
+            VStack { Spacer(); TransferProgressView().padding() }
+            ConflictDialogView()
+        }
+    }
+    
+    @ViewBuilder
+    private var syncSheet: some View {
+        if let left = leftTabs.selectedPane?.currentURL, let right = rightTabs.selectedPane?.currentURL {
+            SynchronizeView(leftURL: left, rightURL: right)
+        } else {
+            Text("Open folders in both panes first.")
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItemGroup(placement: .navigation) {
+            Text(activeSide == .left ? "Left \u{2192} Right" : "Right \u{2192} Left")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        ToolbarItemGroup(placement: .primaryAction) {
+            Button {
+                if let src = activeModel, let dst = inactiveModel { OpusCommands.copyToOtherPane(from: src, to: dst) }
+            } label: { Label("Copy", systemImage: "doc.on.doc") }
+            .disabled(activeModel?.selectedItems.isEmpty ?? true)
+            Button {
+                if let src = activeModel, let dst = inactiveModel { OpusCommands.moveToOtherPane(from: src, to: dst) }
+            } label: { Label("Move", systemImage: "arrow.right.doc.on.clipboard") }
+            .disabled(activeModel?.selectedItems.isEmpty ?? true)
+            Button { activeTabManager.addTab() } label: { Label("New Tab", systemImage: "plus.rectangle.on.rectangle") }
+            Button {
+                Task {
+                    if let model = activeModel {
+                        _ = try? FileOperations.createFolder(in: model.currentURL)
+                        model.navigate(to: model.currentURL)
                     }
-                } label: { Label("New Folder", systemImage: "folder.badge.plus") }
-                Button {
-                    guard let model = activeModel, !model.selectedFileItems.isEmpty else { return }
-                    try? FileOperations.moveToTrash(model.selectedFileItems)
-                    model.navigate(to: model.currentURL)
-                    NotificationCenter.default.post(name: .filesDidChange, object: nil)
-                } label: { Label("Delete", systemImage: "trash") }
-                .disabled(activeModel?.selectedItems.isEmpty ?? true)
-                Toggle(isOn: $showViewer) { Label("Viewer", systemImage: "eye") }
-                Button { showingSynchronize = true } label: { Label("Synchronize", systemImage: "arrow.triangle.2.circlepath") }
-                Button { showingFormatPatterns = true } label: { Label("Format Patterns", systemImage: "folder.badge.gearshape") }
-                Button { showingSettings = true } label: { Label("Settings", systemImage: "gear") }
-            }
+                }
+            } label: { Label("New Folder", systemImage: "folder.badge.plus") }
+            Button {
+                guard let model = activeModel, !model.selectedFileItems.isEmpty else { return }
+                try? FileOperations.moveToTrash(model.selectedFileItems)
+                model.navigate(to: model.currentURL)
+                NotificationCenter.default.post(name: .filesDidChange, object: nil)
+            } label: { Label("Delete", systemImage: "trash") }
+            .disabled(activeModel?.selectedItems.isEmpty ?? true)
+            Toggle(isOn: $showViewer) { Label("Viewer", systemImage: "eye") }
+            Button { showingSynchronize = true } label: { Label("Synchronize", systemImage: "arrow.triangle.2.circlepath") }
+            Button { showingFormatPatterns = true } label: { Label("Format Patterns", systemImage: "folder.badge.gearshape") }
+            Button { showingSettings = true } label: { Label("Settings", systemImage: "gear") }
         }
     }
     
