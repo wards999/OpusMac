@@ -15,6 +15,10 @@ struct FileListView: View {
         return model.items.filter { $0.name.localizedCaseInsensitiveContains(filterText) }
     }
     
+    private var visibleColumns: [ColumnConfig] {
+        model.format.columns.filter { $0.isVisible }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -31,6 +35,16 @@ struct FileListView: View {
                 )) { Image(systemName: "list.bullet.indent") }
                 .toggleStyle(.button)
                 .help("Flat View")
+                ColumnChooser(columns: Binding(
+                    get: { model.format.columns },
+                    set: { newCols in
+                        var f = model.format
+                        f.columns = newCols
+                        model.updateFormat(f)
+                    }
+                )) {
+                    model.rememberCurrentFormat()
+                }
             }
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
@@ -41,8 +55,11 @@ struct FileListView: View {
                 case .icons, .thumbnails: iconsView
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay { if model.isLoading { ProgressView().scaleEffect(1.2) } }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
         .onTapGesture { onActivate() }
         .onKeyPress(.space) {
             if let item = model.selectedFileItems.first { onQuickLook(item); return .handled }
@@ -52,30 +69,45 @@ struct FileListView: View {
     
     private var detailsView: some View {
         Table(filteredItems, selection: $model.selectedItems) {
-            TableColumn("Name") { item in
-                HStack(spacing: 6) {
-                    Image(nsImage: item.icon).resizable().frame(width: 16, height: 16)
-                    if model.renamingItem?.id == item.id {
-                        TextField("Name", text: $model.renameText, onCommit: { model.commitRename() })
-                            .textFieldStyle(.plain).focused($renameFocused)
-                            .onAppear { renameFocused = true }
-                            .onSubmit { model.commitRename() }
-                            .onExitCommand { model.cancelRename() }
-                    } else {
-                        Text(item.name).lineLimit(1)
-                            .onTapGesture(count: 2) { onOpen(item) }
+            if visibleColumns.contains(where: { $0.id == "name" }) {
+                TableColumn("Name") { item in
+                    HStack(spacing: 6) {
+                        Image(nsImage: item.icon).resizable().frame(width: 16, height: 16)
+                        if model.renamingItem?.id == item.id {
+                            TextField("Name", text: $model.renameText, onCommit: { model.commitRename() })
+                                .textFieldStyle(.plain).focused($renameFocused)
+                                .onAppear { renameFocused = true }
+                                .onSubmit { model.commitRename() }
+                                .onExitCommand { model.cancelRename() }
+                        } else {
+                            Text(item.name).lineLimit(1)
+                                .onTapGesture(count: 2) { onOpen(item) }
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .draggable(item.url) {
+                        Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
+                            .padding(6).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                     }
                 }
-                .contentShape(Rectangle())
-                .draggable(item.url) {
-                    Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
-                        .padding(6).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                }
-            }.width(min: 180, ideal: 260)
-            TableColumn("Size") { item in Text(item.formattedSize).foregroundStyle(.secondary) }.width(min: 70, ideal: 90)
-            TableColumn("Date Modified") { item in Text(item.formattedDate).foregroundStyle(.secondary) }.width(min: 120, ideal: 150)
-            TableColumn("Kind") { item in Text(item.kind).foregroundStyle(.secondary) }.width(min: 80, ideal: 120)
-            TableColumn("Created") { item in Text(item.dateCreatedString).foregroundStyle(.secondary) }.width(min: 100, ideal: 140)
+                .width(min: 120, ideal: model.format.width(for: "name"))
+            }
+            if visibleColumns.contains(where: { $0.id == "size" }) {
+                TableColumn("Size") { item in Text(item.formattedSize).foregroundStyle(.secondary) }
+                    .width(min: 60, ideal: model.format.width(for: "size"))
+            }
+            if visibleColumns.contains(where: { $0.id == "dateModified" }) {
+                TableColumn("Date Modified") { item in Text(item.formattedDate).foregroundStyle(.secondary) }
+                    .width(min: 100, ideal: model.format.width(for: "dateModified"))
+            }
+            if visibleColumns.contains(where: { $0.id == "kind" }) {
+                TableColumn("Kind") { item in Text(item.kind).foregroundStyle(.secondary) }
+                    .width(min: 70, ideal: model.format.width(for: "kind"))
+            }
+            if visibleColumns.contains(where: { $0.id == "dateCreated" }) {
+                TableColumn("Created") { item in Text(item.dateCreatedString).foregroundStyle(.secondary) }
+                    .width(min: 90, ideal: model.format.width(for: "dateCreated"))
+            }
         }
         .tableStyle(.inset(alternatesRowBackgrounds: true))
         .onChange(of: model.selectedItems) { _, _ in onActivate() }

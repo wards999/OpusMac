@@ -41,18 +41,24 @@ struct ContentView: View {
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
         } detail: {
-            HSplitView {
-                PaneView(tabManager: leftTabs, isActive: activeSide == .left, onActivate: { activeSide = .left })
-                    .frame(minWidth: 280, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
-                    .layoutPriority(1)
-                PaneView(tabManager: rightTabs, isActive: activeSide == .right, onActivate: { activeSide = .right })
-                    .frame(minWidth: 280, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
-                    .layoutPriority(1)
-                if showViewer {
-                    ViewerPane(item: viewerItem)
-                        .frame(minWidth: 200, idealWidth: 280, maxHeight: .infinity)
-                        .layoutPriority(0.5)
+            // Use GeometryReader + HStack instead of HSplitView so both panes
+            // reliably receive clicks and fill their space.
+            GeometryReader { geo in
+                let viewerWidth: CGFloat = showViewer ? 240 : 0
+                let paneWidth = max(280, (geo.size.width - viewerWidth - 8) / 2)
+                HStack(spacing: 0) {
+                    PaneView(tabManager: leftTabs, isActive: activeSide == .left, onActivate: { activeSide = .left })
+                        .frame(width: paneWidth)
+                    Divider()
+                    PaneView(tabManager: rightTabs, isActive: activeSide == .right, onActivate: { activeSide = .right })
+                        .frame(width: paneWidth)
+                    if showViewer {
+                        Divider()
+                        ViewerPane(item: viewerItem)
+                            .frame(width: viewerWidth)
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(themeManager.paneBackground)

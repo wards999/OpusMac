@@ -21,9 +21,10 @@ struct PaneView: View {
                     Button { model.goForward() } label: { Image(systemName: "chevron.right") }.disabled(!model.canGoForward)
                     Button { model.goUp() } label: { Image(systemName: "chevron.up") }
                     Divider().frame(height: 16)
-                    Text(model.currentURL.path)
-                        .font(.system(.body, design: .monospaced)).lineLimit(1).truncationMode(.head)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    BreadcrumbBar(url: model.currentURL) { url in
+                        model.navigate(to: url)
+                    }
+                    .frame(maxWidth: .infinity)
                     Picker("", selection: Binding(get: { model.format.viewMode }, set: { model.setViewMode($0) })) {
                         ForEach(ViewMode.allCases) { mode in
                             Label(mode.displayName, systemImage: mode.iconName)
@@ -33,7 +34,7 @@ struct PaneView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 160)
+                    .frame(width: 140)
                     .help("View mode")
                     Menu {
                         Button("Remember View for this Folder") { model.rememberCurrentFormat() }
@@ -43,7 +44,7 @@ struct PaneView: View {
                             .disabled(model.selectedItems.isEmpty)
                     } label: { Image(systemName: "slider.horizontal.3") }
                 }
-                .padding(.horizontal, 10).padding(.vertical, 6)
+                .padding(.horizontal, 8).padding(.vertical, 4)
                 .background(isActive ? themeManager.accent.opacity(0.12) : themeManager.listBackground)
                 .contentShape(Rectangle())
                 .onTapGesture { onActivate() }
@@ -121,7 +122,11 @@ struct PaneView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(themeManager.listBackground)
-        .overlay(RoundedRectangle(cornerRadius: 0).stroke(isActive ? themeManager.accent.opacity(0.7) : Color.clear, lineWidth: 2))
+        .overlay(
+            RoundedRectangle(cornerRadius: 0)
+                .stroke(isActive ? themeManager.accent.opacity(0.7) : Color.clear, lineWidth: 2)
+                .allowsHitTesting(false)
+        )
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
         .sheet(isPresented: $showBatchRename) {
