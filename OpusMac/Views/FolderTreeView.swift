@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct FolderTreeView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @Binding var selectedURL: URL?
     var onSelect: (URL) -> Void
     @State private var rootNodes: [TreeNode] = []
@@ -19,6 +20,8 @@ struct FolderTreeView: View {
             }
         }
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
+        .background(themeManager.paneBackground)
         .onAppear { loadRoots() }
     }
     
