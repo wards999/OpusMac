@@ -27,7 +27,8 @@ struct ColumnConfig: Codable, Identifiable, Hashable {
         ColumnConfig(id: "name",         isVisible: true, width: 280),
         ColumnConfig(id: "size",         isVisible: true, width: 100),
         ColumnConfig(id: "dateModified", isVisible: true, width: 160),
-        ColumnConfig(id: "kind",         isVisible: true, width: 140)
+        ColumnConfig(id: "kind",         isVisible: true, width: 140),
+        ColumnConfig(id: "dateCreated",  isVisible: true, width: 140)
     ]
 }
 
@@ -38,6 +39,18 @@ struct FolderFormat: Codable, Equatable {
     var sortAscending: Bool = true
     var thumbnailSize: Double = 80
     var showHiddenFiles: Bool = false
+    var flatView: Bool = false
+    var showInvisibles: Bool = false
     
     static let `default` = FolderFormat()
+    
+    func width(for columnId: String) -> Double {
+        columns.first { $0.id == columnId }?.width ?? 100
+    }
+    
+    mutating func setWidth(_ width: Double, for columnId: String) {
+        if let idx = columns.firstIndex(where: { $0.id == columnId }) {
+            columns[idx].width = width
+        }
+    }
 }

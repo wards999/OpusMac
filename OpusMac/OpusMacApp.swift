@@ -7,23 +7,58 @@ struct OpusMacApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .frame(minWidth: 900, minHeight: 600)
+                .frame(minWidth: 1000, minHeight: 650)
                 .preferredColorScheme(themeManager.preferredColorScheme())
                 .tint(themeManager.accent)
                 .environmentObject(themeManager)
         }
         .windowStyle(.titleBar)
-        .windowToolbarStyle(.unified)
+        .windowToolbarStyle(.unified(showsTitle: true))
+        .defaultSize(width: 1280, height: 800)
         .commands {
             CommandGroup(replacing: .newItem) { }
             
+            CommandMenu("File") {
+                Button("New Folder") {
+                    NotificationCenter.default.post(name: .newFolder, object: nil)
+                }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
+                
+                Divider()
+                
+                Button("Copy to Other Pane") {
+                    NotificationCenter.default.post(name: .copyToOtherPane, object: nil)
+                }
+                .keyboardShortcut("c", modifiers: [.command, .shift])
+                
+                Button("Move to Other Pane") {
+                    NotificationCenter.default.post(name: .moveToOtherPane, object: nil)
+                }
+                .keyboardShortcut("m", modifiers: [.command, .shift])
+            }
+            
             CommandMenu("Go") {
-                Button("Back") { NotificationCenter.default.post(name: .goBack, object: nil) }
-                    .keyboardShortcut("[", modifiers: .command)
-                Button("Forward") { NotificationCenter.default.post(name: .goForward, object: nil) }
-                    .keyboardShortcut("]", modifiers: .command)
-                Button("Enclosing Folder") { NotificationCenter.default.post(name: .goUp, object: nil) }
-                    .keyboardShortcut(.upArrow, modifiers: .command)
+                Button("Back") {
+                    NotificationCenter.default.post(name: .goBack, object: nil)
+                }
+                .keyboardShortcut("[", modifiers: .command)
+                
+                Button("Forward") {
+                    NotificationCenter.default.post(name: .goForward, object: nil)
+                }
+                .keyboardShortcut("]", modifiers: .command)
+                
+                Button("Enclosing Folder") {
+                    NotificationCenter.default.post(name: .goUp, object: nil)
+                }
+                .keyboardShortcut(.upArrow, modifiers: .command)
+                
+                Divider()
+                
+                Button("Swap Panes") {
+                    NotificationCenter.default.post(name: .swapPanes, object: nil)
+                }
+                .keyboardShortcut("u", modifiers: .command)
             }
             
             CommandMenu("View") {
@@ -40,6 +75,17 @@ struct OpusMacApp: App {
                     NotificationCenter.default.post(name: .openThemeSettings, object: nil)
                 }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
+                
+                Divider()
+                
+                Button("Synchronize…") {
+                    NotificationCenter.default.post(name: .openSynchronize, object: nil)
+                }
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+                
+                Button("Path-Pattern Formats…") {
+                    NotificationCenter.default.post(name: .openFormatPatterns, object: nil)
+                }
             }
         }
     }
@@ -52,4 +98,10 @@ extension Notification.Name {
     static let rememberFormat = Notification.Name("rememberFormat")
     static let clearFormat = Notification.Name("clearFormat")
     static let openThemeSettings = Notification.Name("openThemeSettings")
+    static let copyToOtherPane = Notification.Name("copyToOtherPane")
+    static let moveToOtherPane = Notification.Name("moveToOtherPane")
+    static let newFolder = Notification.Name("newFolder")
+    static let swapPanes = Notification.Name("swapPanes")
+    static let openSynchronize = Notification.Name("openSynchronize")
+    static let openFormatPatterns = Notification.Name("openFormatPatterns")
 }
