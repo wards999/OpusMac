@@ -14,6 +14,8 @@ struct ContentView: View {
     @State private var showingSynchronize = false
     @State private var showingFormatPatterns = false
     @State private var showViewer = true
+    @State private var showLeftPane = true
+    @State private var showRightPane = true
     @State private var viewerItem: FileItem? = nil
     
     private enum Side { case left, right }
@@ -45,13 +47,30 @@ struct ContentView: View {
         } detail: {
             GeometryReader { geo in
                 let viewerWidth: CGFloat = showViewer ? 240 : 0
-                let paneWidth = max(280, (geo.size.width - viewerWidth - 8) / 2)
+                let paneCount = (showLeftPane ? 1 : 0) + (showRightPane ? 1 : 0)
+                let paneWidth = paneCount > 0 ? max(280, (geo.size.width - viewerWidth - 8) / CGFloat(paneCount)) : 0
                 HStack(spacing: 0) {
-                    PaneView(tabManager: leftTabs, isActive: activeSide == .left, onActivate: { activeSide = .left })
+                    if showLeftPane {
+                        PaneView(
+                            tabManager: leftTabs,
+                            isActive: activeSide == .left,
+                            onActivate: { activeSide = .left },
+                            onSwap: { leftTabs.swapContents(with: rightTabs) },
+                            onClose: { showLeftPane = false; if !showRightPane { showRightPane = true } }
+                        )
                         .frame(width: paneWidth)
-                    Divider()
-                    PaneView(tabManager: rightTabs, isActive: activeSide == .right, onActivate: { activeSide = .right })
+                    }
+                    if showLeftPane && showRightPane { Divider() }
+                    if showRightPane {
+                        PaneView(
+                            tabManager: rightTabs,
+                            isActive: activeSide == .right,
+                            onActivate: { activeSide = .right },
+                            onSwap: { leftTabs.swapContents(with: rightTabs) },
+                            onClose: { showRightPane = false; if !showLeftPane { showLeftPane = true } }
+                        )
                         .frame(width: paneWidth)
+                    }
                     if showViewer {
                         Divider()
                         ViewerPane(item: viewerItem)
@@ -83,6 +102,9 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .moveToOtherPane)) { _ in
             if let src = activeModel, let dst = inactiveModel { OpusCommands.moveToOtherPane(from: src, to: dst) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .swapPanes)) { _ in
+            leftTabs.swapContents(with: rightTabs)
         }
         .onChange(of: leftTabs.selectedPane?.selectedItems) { _, _ in updateViewer() }
         .onChange(of: rightTabs.selectedPane?.selectedItems) { _, _ in updateViewer() }

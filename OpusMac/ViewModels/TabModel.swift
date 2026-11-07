@@ -61,4 +61,14 @@ final class PaneTabManager: ObservableObject {
     func selectTab(_ id: TabModel.ID) {
         selectedTabID = id
     }
+    
+    /// Exchange all tabs and selection with another manager (used for pane swap).
+    func swapContents(with other: PaneTabManager) {
+        let myTabs = tabs
+        let mySelection = selectedTabID
+        tabs = other.tabs
+        selectedTabID = other.selectedTabID
+        other.tabs = myTabs
+        other.selectedTabID = mySelection
+    }
 }

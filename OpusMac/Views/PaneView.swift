@@ -6,6 +6,8 @@ struct PaneView: View {
     @ObservedObject var tabManager: PaneTabManager
     let isActive: Bool
     var onActivate: () -> Void
+    var onSwap: (() -> Void)? = nil
+    var onClose: (() -> Void)? = nil
     @State private var isTargeted = false
     @State private var dropMode: FileOperations.TransferMode = .move
     @State private var showBatchRename = false
@@ -34,7 +36,26 @@ struct PaneView: View {
                                 .labelStyle(.iconOnly).help(mode.displayName).tag(mode)
                         }
                     }
-                    .pickerStyle(.segmented).frame(width: 120)
+                    .pickerStyle(.segmented).frame(width: 110)
+                    // Swap panes <> and close X (Opus style)
+                    if let onSwap {
+                        Button { onSwap() } label: {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Swap panes")
+                        .frame(width: 20, height: 20)
+                    }
+                    if let onClose {
+                        Button { onClose() } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 9, weight: .bold))
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Close pane")
+                        .frame(width: 18, height: 18)
+                    }
                     Menu {
                         Button("Remember View for this Folder") { model.rememberCurrentFormat() }
                         Button("Clear Format for this Folder") { model.clearFormat() }
@@ -42,7 +63,7 @@ struct PaneView: View {
                         Button("Batch Rename\u{2026}") { if !model.selectedFileItems.isEmpty { showBatchRename = true } }
                             .disabled(model.selectedItems.isEmpty)
                     } label: { Image(systemName: "ellipsis.circle") }
-                    .menuStyle(.borderlessButton).frame(width: 24)
+                    .menuStyle(.borderlessButton).frame(width: 22)
                 }
                 .padding(.horizontal, 6).padding(.vertical, 3)
                 .background(isActive ? Color(red: 0.18, green: 0.32, blue: 0.55) : Color(red: 0.16, green: 0.16, blue: 0.17))
