@@ -45,39 +45,34 @@ struct ContentView: View {
             .background(themeManager.paneBackground)
             .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
         } detail: {
-            GeometryReader { geo in
-                let viewerWidth: CGFloat = showViewer ? 240 : 0
-                let paneCount = (showLeftPane ? 1 : 0) + (showRightPane ? 1 : 0)
-                let paneWidth = paneCount > 0 ? max(280, (geo.size.width - viewerWidth - 8) / CGFloat(paneCount)) : 0
-                HStack(spacing: 0) {
-                    if showLeftPane {
-                        PaneView(
-                            tabManager: leftTabs,
-                            isActive: activeSide == .left,
-                            onActivate: { activeSide = .left },
-                            onSwap: { leftTabs.swapContents(with: rightTabs) },
-                            onClose: { showLeftPane = false; if !showRightPane { showRightPane = true } }
-                        )
-                        .frame(width: paneWidth)
-                    }
-                    if showLeftPane && showRightPane { Divider() }
-                    if showRightPane {
-                        PaneView(
-                            tabManager: rightTabs,
-                            isActive: activeSide == .right,
-                            onActivate: { activeSide = .right },
-                            onSwap: { leftTabs.swapContents(with: rightTabs) },
-                            onClose: { showRightPane = false; if !showLeftPane { showLeftPane = true } }
-                        )
-                        .frame(width: paneWidth)
-                    }
-                    if showViewer {
-                        Divider()
-                        ViewerPane(item: viewerItem)
-                            .frame(width: viewerWidth)
-                    }
+            HSplitView {
+                if showLeftPane {
+                    PaneView(
+                        tabManager: leftTabs,
+                        isActive: activeSide == .left,
+                        onActivate: { activeSide = .left },
+                        onSwap: { leftTabs.swapContents(with: rightTabs) },
+                        onClose: { showLeftPane = false; if !showRightPane { showRightPane = true } }
+                    )
+                    .frame(minWidth: 240, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
+                    .layoutPriority(1)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                if showRightPane {
+                    PaneView(
+                        tabManager: rightTabs,
+                        isActive: activeSide == .right,
+                        onActivate: { activeSide = .right },
+                        onSwap: { leftTabs.swapContents(with: rightTabs) },
+                        onClose: { showRightPane = false; if !showLeftPane { showLeftPane = true } }
+                    )
+                    .frame(minWidth: 240, idealWidth: 480, maxWidth: .infinity, maxHeight: .infinity)
+                    .layoutPriority(1)
+                }
+                if showViewer {
+                    ViewerPane(item: viewerItem)
+                        .frame(minWidth: 180, idealWidth: 260, maxWidth: 400, maxHeight: .infinity)
+                        .layoutPriority(0.5)
+                }
             }
         }
         .background(themeManager.paneBackground)
