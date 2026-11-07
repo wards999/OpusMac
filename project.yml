@@ -1,0 +1,35 @@
+name: OpusMac
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  OpusMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: OpusMac
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.OpusMac
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        INFOPLIST_KEY_CFBundleDisplayName: OpusMac
+        INFOPLIST_KEY_LSMinimumSystemVersion: "14.0"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: false
+        CODE_SIGNING_ALLOWED: false
+    info:
+      path: OpusMac/Info.plist
+      properties:
+        CFBundleName: OpusMac
+        CFBundleDisplayName: OpusMac
+        LSApplicationCategoryType: public.app-category.utilities
+        NSHighResolutionCapable: true
