@@ -1,0 +1,88 @@
+name: Build and Release DMG
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project OpusMac.xcodeproj \
+            -scheme OpusMac \
+            -configuration Release \
+            -derivedDataPath build \
+            -archivePath build/OpusMac.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Export .app
+        run: |
+          mkdir -p dist
+          cp -R build/OpusMac.xcarchive/Products/Applications/OpusMac.app dist/
+
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "OpusMac" \
+            -srcfolder dist \
+            -ov -format UDZO \
+            OpusMac.dmg
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpusMac-DMG
+          path: OpusMac.dmg
+          retention-days: 30
+
+      - name: Create GitHub Release (on main push)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-${{ github.run_number }}
+          name: OpusMac v0.1.0-${{ github.run_number }}
+          body: |
+            Automated build of OpusMac.
+            
+            **Download the DMG** from the assets below.
+            
+            ### Features
+            - Dual-pane file manager
+            - Per-folder view memory (Folder Formats)
+            - Drag to Move / Option-drag to Copy
+            - Themes
+            - Sidebar + Tree foundation
+            - Batch Rename foundation
+          files: OpusMac.dmg
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
