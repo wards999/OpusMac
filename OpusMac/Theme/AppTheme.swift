@@ -15,13 +15,13 @@ enum ThemeMode: String, CaseIterable, Identifiable, Codable {
 }
 
 struct AppTheme: Codable, Equatable {
-    var mode: ThemeMode = .system
-    var accentColor: CodableColor = CodableColor(.accentColor)
-    var paneBackground: CodableColor = CodableColor(NSColor.windowBackgroundColor)
-    var listBackground: CodableColor = CodableColor(NSColor.controlBackgroundColor)
-    var selectionColor: CodableColor = CodableColor(.accentColor)
-    var textColor: CodableColor = CodableColor(NSColor.labelColor)
-    var secondaryTextColor: CodableColor = CodableColor(NSColor.secondaryLabelColor)
+    var mode: ThemeMode = .dark
+    var accentColor: CodableColor = CodableColor(Color(red: 0.25, green: 0.52, blue: 0.95))
+    var paneBackground: CodableColor = CodableColor(Color(red: 0.13, green: 0.13, blue: 0.14))
+    var listBackground: CodableColor = CodableColor(Color(red: 0.11, green: 0.11, blue: 0.12))
+    var selectionColor: CodableColor = CodableColor(Color(red: 0.25, green: 0.52, blue: 0.95))
+    var textColor: CodableColor = CodableColor(Color.white)
+    var secondaryTextColor: CodableColor = CodableColor(Color.gray)
     static let `default` = AppTheme()
 }
 
@@ -70,7 +70,7 @@ final class ThemeManager: ObservableObject {
         case .system: return nil
         case .light: return .light
         case .dark: return .dark
-        case .custom: return nil
+        case .custom: return .dark
         }
     }
 }

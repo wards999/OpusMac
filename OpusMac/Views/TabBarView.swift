@@ -7,7 +7,7 @@ struct TabBarView: View {
     var body: some View {
         HStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 1) {
+                HStack(spacing: 0) {
                     ForEach(manager.tabs) { tab in
                         TabItemView(
                             tab: tab,
@@ -18,25 +18,20 @@ struct TabBarView: View {
                         )
                     }
                 }
-                .padding(.leading, 4)
+                .padding(.leading, 2)
             }
-            Spacer(minLength: 4)
+            Spacer(minLength: 2)
             Button { manager.addTab() } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .semibold))
-                    .frame(width: 22, height: 22)
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 18, height: 18)
             }
             .buttonStyle(.borderless)
             .help("New Tab")
-            .padding(.trailing, 6)
+            .padding(.trailing, 4)
         }
-        .frame(height: 30)
-        .background(
-            LinearGradient(
-                colors: [Color(nsColor: .windowBackgroundColor), Color(nsColor: .controlBackgroundColor)],
-                startPoint: .top, endPoint: .bottom
-            )
-        )
+        .frame(height: 26)
+        .background(Color(red: 0.09, green: 0.09, blue: 0.10))
     }
 }
 
@@ -49,25 +44,27 @@ struct TabItemView: View {
     @State private var isHovering = false
     
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             Image(systemName: "folder.fill")
-                .font(.system(size: 9))
-                .foregroundStyle(isSelected && isActivePane ? Color.accentColor : .secondary)
+                .font(.system(size: 8))
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
             Text(tab.title)
                 .font(.system(size: 11, weight: isSelected ? .medium : .regular))
                 .lineLimit(1)
             if isSelected || isHovering {
                 Button { onClose() } label: {
-                    Image(systemName: "xmark").font(.system(size: 8, weight: .bold))
+                    Image(systemName: "xmark").font(.system(size: 7, weight: .bold))
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 5).fill(backgroundColor))
-        .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(borderColor, lineWidth: isSelected ? 1 : 0))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 3)
+                .fill(backgroundColor)
+        )
         .contentShape(Rectangle())
         .onTapGesture(perform: onSelect)
         .onHover { isHovering = $0 }
@@ -76,12 +73,8 @@ struct TabItemView: View {
     
     private var backgroundColor: Color {
         if isSelected {
-            return isActivePane ? Color.accentColor.opacity(0.18) : Color.secondary.opacity(0.12)
+            return isActivePane ? Color.accentColor.opacity(0.22) : Color.white.opacity(0.08)
         }
-        return isHovering ? Color.secondary.opacity(0.08) : Color.clear
-    }
-    
-    private var borderColor: Color {
-        isSelected && isActivePane ? Color.accentColor.opacity(0.45) : Color.clear
+        return isHovering ? Color.white.opacity(0.05) : Color.clear
     }
 }
