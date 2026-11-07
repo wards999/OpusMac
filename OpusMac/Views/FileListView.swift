@@ -59,8 +59,6 @@ struct FileListView: View {
             .overlay { if model.isLoading { ProgressView().scaleEffect(1.2) } }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
-        .onTapGesture { onActivate() }
         .onKeyPress(.space) {
             if let item = model.selectedFileItems.first { onQuickLook(item); return .handled }
             return .ignored
@@ -81,10 +79,10 @@ struct FileListView: View {
                                 .onExitCommand { model.cancelRename() }
                         } else {
                             Text(item.name).lineLimit(1)
-                                .onTapGesture(count: 2) { onOpen(item) }
                         }
                     }
                     .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpen(item) }
                     .draggable(item.url) {
                         Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
                             .padding(6).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
@@ -129,23 +127,28 @@ struct FileListView: View {
     private var iconsView: some View {
         let size = model.format.viewMode == .thumbnails ? model.format.thumbnailSize : 64
         return ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: size + 40, maximum: size + 80))], spacing: 16) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: size + 40, maximum: size + 80))], spacing: 12) {
                 ForEach(filteredItems) { item in
-                    FileIconCell(item: item, size: size, isSelected: model.selectedItems.contains(item.id))
-                        .onTapGesture(count: 2) { onOpen(item) }
-                        .onTapGesture {
-                            onActivate()
-                            if NSEvent.modifierFlags.contains(.command) { model.toggleSelection(item) }
-                            else { model.select(item) }
-                        }
-                        .draggable(item.url) { FileIconCell(item: item, size: 48, isSelected: false).opacity(0.9) }
-                        .contextMenu {
-                            Button("Open") { onOpen(item) }
-                            Button("Quick Look") { onQuickLook(item) }
-                            Button("Rename") { model.beginRename(item) }
-                        }
+                    FileIconCell(
+                        item: item,
+                        size: size,
+                        showThumbnail: model.format.viewMode == .thumbnails,
+                        isSelected: model.selectedItems.contains(item.id)
+                    )
+                    .onTapGesture(count: 2) { onOpen(item) }
+                    .onTapGesture {
+                        onActivate()
+                        if NSEvent.modifierFlags.contains(.command) { model.toggleSelection(item) }
+                        else { model.select(item) }
+                    }
+                    .draggable(item.url) { FileIconCell(item: item, size: 48, showThumbnail: false, isSelected: false).opacity(0.9) }
+                    .contextMenu {
+                        Button("Open") { onOpen(item) }
+                        Button("Quick Look") { onQuickLook(item) }
+                        Button("Rename") { model.beginRename(item) }
+                    }
                 }
-            }.padding()
+            }.padding(8)
         }
     }
 }
@@ -153,15 +156,47 @@ struct FileListView: View {
 struct FileIconCell: View {
     let item: FileItem
     let size: CGFloat
+    let showThumbnail: Bool
     let isSelected: Bool
+    @State private var thumbnail: NSImage?
+    
     var body: some View {
-        VStack(spacing: 6) {
-            Image(nsImage: item.icon).resizable().aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
-                .background(RoundedRectangle(cornerRadius: 6).fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear))
-            Text(item.name).font(.caption).lineLimit(2).multilineTextAlignment(.center).frame(width: size + 20)
+        VStack(spacing: 4) {
+            ZStack {
+                if let thumb = thumbnail {
+                    Image(nsImage: thumb)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: size, height: size)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                } else {
+                    Image(nsImage: item.icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: size, height: size)
+                }
+            }
+            .frame(width: size, height: size)
+            .background(RoundedRectangle(cornerRadius: 4).fill(isSelected ? Color.accentColor.opacity(0.25) : Color.clear))
+            
+            Text(item.name)
+                .font(.system(size: 11))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: size + 16)
+            
+            if !item.isDirectory {
+                Text(item.formattedSize)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .padding(6)
-        .background(RoundedRectangle(cornerRadius: 8).fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear))
+        .padding(4)
+        .background(RoundedRectangle(cornerRadius: 6).fill(isSelected ? Color.accentColor.opacity(0.12) : Color.clear))
+        .task(id: item.url) {
+            if showThumbnail && item.isImage {
+                thumbnail = await ThumbnailCache.shared.thumbnail(for: item.url, size: size * 2)
+            }
+        }
     }
 }

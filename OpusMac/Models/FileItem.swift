@@ -12,8 +12,21 @@ struct FileItem: Identifiable, Hashable {
     let dateCreated: Date?
     let contentType: UTType?
     
+    // Cached values to avoid regenerating on every render
+    private(set) var cachedIcon: NSImage?
+    private(set) var cachedDateModified: String?
+    private(set) var cachedDateCreated: String?
+    
     var icon: NSImage {
-        NSWorkspace.shared.icon(forFile: url.path)
+        if let cached = cachedIcon { return cached }
+        let img = NSWorkspace.shared.icon(forFile: url.path)
+        return img
+    }
+    
+    mutating func cacheIcon() {
+        if cachedIcon == nil {
+            cachedIcon = NSWorkspace.shared.icon(forFile: url.path)
+        }
     }
     
     var formattedSize: String {
@@ -22,24 +35,31 @@ struct FileItem: Identifiable, Hashable {
     }
     
     var formattedDate: String {
+        if let cached = cachedDateModified { return cached }
         guard let dateModified else { return "--" }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: dateModified)
+        return Self.dateFormatter.string(from: dateModified)
     }
     
     var dateCreatedString: String {
+        if let cached = cachedDateCreated { return cached }
         guard let dateCreated else { return "--" }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: dateCreated)
+        return Self.dateFormatter.string(from: dateCreated)
     }
+    
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
     
     var kind: String {
         if isDirectory { return "Folder" }
         return contentType?.localizedDescription ?? "Document"
+    }
+    
+    var isImage: Bool {
+        contentType?.conforms(to: .image) ?? false
     }
     
     static func from(url: URL) -> FileItem? {
@@ -50,10 +70,8 @@ struct FileItem: Identifiable, Hashable {
             .creationDateKey,
             .contentTypeKey
         ]
-        
         guard let values = try? url.resourceValues(forKeys: keys) else { return nil }
-        
-        return FileItem(
+        var item = FileItem(
             id: url,
             url: url,
             name: url.lastPathComponent,
@@ -61,7 +79,41 @@ struct FileItem: Identifiable, Hashable {
             size: values.totalFileSize.map(Int64.init),
             dateModified: values.contentModificationDate,
             dateCreated: values.creationDate,
-            contentType: values.contentType
+            contentType: values.contentType,
+            cachedIcon: nil,
+            cachedDateModified: nil,
+            cachedDateCreated: nil
         )
+        item.cacheIcon()
+        if let d = item.dateModified { item.cachedDateModified = Self.dateFormatter.string(from: d) }
+        if let d = item.dateCreated { item.cachedDateCreated = Self.dateFormatter.string(from: d) }
+        return item
+    }
+}
+
+// Simple thumbnail cache
+actor ThumbnailCache {
+    static let shared = ThumbnailCache()
+    private var cache: [URL: NSImage] = [:]
+    
+    func thumbnail(for url: URL, size: CGFloat) async -> NSImage? {
+        if let existing = cache[url] { return existing }
+        guard let image = NSImage(contentsOf: url) else { return nil }
+        let thumb = image.resized(to: NSSize(width: size, height: size))
+        cache[url] = thumb
+        return thumb
+    }
+}
+
+extension NSImage {
+    func resized(to size: NSSize) -> NSImage {
+        let newImage = NSImage(size: size)
+        newImage.lockFocus()
+        draw(in: NSRect(origin: .zero, size: size),
+             from: NSRect(origin: .zero, size: self.size),
+             operation: .copy,
+             fraction: 1.0)
+        newImage.unlockFocus()
+        return newImage
     }
 }
