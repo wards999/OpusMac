@@ -75,12 +75,11 @@ jobs:
             **Download the DMG** from the assets below.
             
             ### Features
-            - Dual-pane file manager
-            - Per-folder view memory (Folder Formats)
-            - Drag to Move / Option-drag to Copy
-            - Themes
-            - Sidebar + Tree foundation
-            - Batch Rename foundation
+            - Dual-pane file manager with tabs
+            - Per-folder + path-pattern view memory
+            - Drag Move / Option-drag Copy
+            - Synchronize, Flat View, ZIP browse
+            - Themes, Quick Look, Batch Rename
           files: OpusMac.dmg
           draft: false
           prerelease: true
