@@ -152,13 +152,15 @@ struct FileListView: View {
                 }
             }
             .padding(8)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 0)
         }
+        .scrollContentBackground(.hidden)
         .background(themeManager.listBackground)
     }
 }
 
 struct FileIconCell: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let item: FileItem
     let size: CGFloat
     let showThumbnail: Bool
@@ -182,10 +184,14 @@ struct FileIconCell: View {
                 }
             }
             .frame(width: size, height: size)
-            .background(RoundedRectangle(cornerRadius: 4).fill(isSelected ? Color.accentColor.opacity(0.25) : Color.clear))
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isSelected ? themeManager.accent.opacity(0.3) : Color.clear)
+            )
             
             Text(item.name)
                 .font(.system(size: 11))
+                .foregroundStyle(themeManager.theme.textColor.color)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(width: size + 16)
@@ -193,11 +199,14 @@ struct FileIconCell: View {
             if !item.isDirectory {
                 Text(item.formattedSize)
                     .font(.system(size: 9))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeManager.theme.secondaryTextColor.color)
             }
         }
         .padding(4)
-        .background(RoundedRectangle(cornerRadius: 6).fill(isSelected ? Color.accentColor.opacity(0.12) : Color.clear))
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? themeManager.accent.opacity(0.15) : Color.clear)
+        )
         .task(id: item.url) {
             if showThumbnail && item.isImage {
                 thumbnail = await ThumbnailCache.shared.thumbnail(for: item.url, size: size * 2)
