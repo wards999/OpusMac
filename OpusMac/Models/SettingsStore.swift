@@ -24,6 +24,7 @@ struct AppSettings: Codable, Equatable {
     var autoSaveFormats: Bool = true
     var maxAutoFormats: Int = 200
     var showPathInTitle: Bool = true
+    var homeButtonFolder: String = "~"
     
     // Folder Tabs
     var showTabBarAlways: Bool = true
@@ -69,5 +70,14 @@ final class SettingsStore: ObservableObject {
     
     func resetToDefaults() {
         settings = .default
+    }
+    
+    func expandPath(_ path: String) -> URL {
+        let expanded = (path as NSString).expandingTildeInPath
+        return URL(fileURLWithPath: expanded)
+    }
+    
+    var homeButtonURL: URL {
+        expandPath(settings.homeButtonFolder)
     }
 }

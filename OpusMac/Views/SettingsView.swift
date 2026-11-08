@@ -116,6 +116,9 @@ struct SettingsView: View {
     
     private var foldersPage: some View {
         Form {
+            TextField("Home Button Folder", text: $store.settings.homeButtonFolder)
+                .help("Where the Home button goes. Use ~ for your user folder.")
+            Text("Examples: ~  ~/Desktop  ~/Documents  /Volumes/External").font(.caption).foregroundStyle(.secondary)
             Toggle("Automatically Remember Folder Formats", isOn: $store.settings.autoSaveFormats)
             Stepper("Max Auto Formats: \(store.settings.maxAutoFormats)", value: $store.settings.maxAutoFormats, in: 50...1000, step: 50)
             Toggle("Show Path in Window Title", isOn: $store.settings.showPathInTitle)

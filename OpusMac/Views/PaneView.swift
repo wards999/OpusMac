@@ -40,7 +40,7 @@ struct PaneView: View {
                     Button { model.goUp() } label: { Image(systemName: "chevron.up") }
                         .buttonStyle(.borderless).help("Up")
                     Button {
-                        model.navigate(to: FileManager.default.homeDirectoryForCurrentUser)
+                        model.navigate(to: SettingsStore.shared.homeButtonURL)
                     } label: { Image(systemName: "house") }
                         .buttonStyle(.borderless).help("Home")
                     Divider().frame(height: 14)
