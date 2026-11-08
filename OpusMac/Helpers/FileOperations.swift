@@ -13,6 +13,15 @@ enum FileOperations {
         NSWorkspace.shared.open(item.url)
     }
     
+    static func openWithDefaultApp(_ item: FileItem) {
+        if item.isDirectory { return }
+        if let appURL = NSWorkspace.shared.urlForApplication(toOpen: item.url) {
+            NSWorkspace.shared.open([item.url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+        } else {
+            NSWorkspace.shared.open(item.url)
+        }
+    }
+    
     static func revealInFinder(_ items: [FileItem]) {
         NSWorkspace.shared.activateFileViewerSelecting(items.map(\.url))
     }

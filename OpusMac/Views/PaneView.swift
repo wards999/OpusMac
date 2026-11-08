@@ -93,8 +93,11 @@ struct PaneView: View {
                     themeManager.listBackground
                     FileListView(model: model, isActive: isActive, onActivate: onActivate,
                         onOpen: { item in
-                            if item.isDirectory { model.navigate(to: item.url) }
-                            else { FileOperations.open(item) }
+                            if item.isDirectory {
+                                model.navigate(to: item.url)
+                            } else {
+                                FileOperations.openWithDefaultApp(item)
+                            }
                         },
                         onQuickLook: { item in QuickLookHelper.shared.preview(item: item) }
                     )
