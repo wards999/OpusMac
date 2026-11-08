@@ -15,14 +15,24 @@ struct PaneView: View {
     
     private var pathBarBackground: Color {
         isActive
-            ? themeManager.accent.opacity(0.35)
-            : themeManager.paneBackground.opacity(0.9)
+            ? themeManager.accent.opacity(0.55)
+            : themeManager.paneBackground
     }
     
     var body: some View {
         VStack(spacing: 0) {
             if let model {
                 HStack(spacing: 4) {
+                    if isActive {
+                        Circle()
+                            .fill(themeManager.accent)
+                            .frame(width: 8, height: 8)
+                            .help("Active pane")
+                    } else {
+                        Circle()
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: 8, height: 8)
+                    }
                     Button { model.goBack() } label: { Image(systemName: "chevron.left") }
                         .disabled(!model.canGoBack).buttonStyle(.borderless).help("Back")
                     Button { model.goForward() } label: { Image(systemName: "chevron.right") }
@@ -87,6 +97,7 @@ struct PaneView: View {
                         onQuickLook: { item in QuickLookHelper.shared.preview(item: item) }
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onTapGesture { onActivate() }
                     
                     if let error = model.errorMessage, model.items.isEmpty {
                         VStack(spacing: 12) {
@@ -140,7 +151,7 @@ struct PaneView: View {
                     }
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(themeManager.paneBackground)
+                .background(isActive ? themeManager.accent.opacity(0.15) : themeManager.paneBackground)
             } else {
                 ContentUnavailableView("No Tab", systemImage: "tab")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -153,7 +164,7 @@ struct PaneView: View {
         .background(themeManager.listBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 0)
-                .stroke(isActive ? themeManager.accent.opacity(0.6) : Color.clear, lineWidth: 1)
+                .stroke(isActive ? themeManager.accent : Color.clear, lineWidth: isActive ? 2 : 0)
                 .allowsHitTesting(false)
         )
         .sheet(isPresented: $showBatchRename) {
