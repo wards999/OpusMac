@@ -10,6 +10,8 @@ struct FileListView: View {
     var onQuickLook: (FileItem) -> Void
     @State private var filterText = ""
     @FocusState private var renameFocused: Bool
+    @State private var lastClickItem: FileItem.ID?
+    @State private var lastClickTime: Date = .distantPast
     
     private var filteredItems: [FileItem] {
         guard !filterText.isEmpty else { return model.items }
@@ -62,7 +64,6 @@ struct FileListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(themeManager.listBackground)
-        .preferredColorScheme(themeManager.preferredColorScheme())
         .onKeyPress(.space) {
             if let item = model.selectedFileItems.first { onQuickLook(item); return .handled }
             return .ignored
@@ -70,6 +71,18 @@ struct FileListView: View {
         .onKeyPress(.return) {
             if let item = model.selectedFileItems.first { onOpen(item); return .handled }
             return .ignored
+        }
+    }
+    
+    private func handleClick(_ item: FileItem) {
+        let now = Date()
+        if lastClickItem == item.id && now.timeIntervalSince(lastClickTime) < 0.35 {
+            onOpen(item)
+            lastClickItem = nil
+        } else {
+            model.select(item)
+            lastClickItem = item.id
+            lastClickTime = now
         }
     }
     
@@ -90,7 +103,7 @@ struct FileListView: View {
                         }
                     }
                     .contentShape(Rectangle())
-                    .onTapGesture(count: 2) { onOpen(item) }
+                    .onTapGesture { handleClick(item) }
                 }
                 .width(min: 120, ideal: model.format.width(for: "name"))
             }
@@ -132,8 +145,7 @@ struct FileListView: View {
     private var iconsView: some View {
         let size = model.format.viewMode == .thumbnails ? model.format.thumbnailSize : 64
         return ZStack {
-            themeManager.listBackground
-                .ignoresSafeArea()
+            themeManager.listBackground.ignoresSafeArea()
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: size + 40, maximum: size + 80))], spacing: 12) {
                     ForEach(filteredItems) { item in
@@ -143,11 +155,7 @@ struct FileListView: View {
                             showThumbnail: model.format.viewMode == .thumbnails,
                             isSelected: model.selectedItems.contains(item.id)
                         )
-                        .onTapGesture(count: 2) { onOpen(item) }
-                        .onTapGesture {
-                            if NSEvent.modifierFlags.contains(.command) { model.toggleSelection(item) }
-                            else { model.select(item) }
-                        }
+                        .onTapGesture { handleClick(item) }
                         .contextMenu {
                             Button("Open") { onOpen(item) }
                             Button("Quick Look") { onQuickLook(item) }

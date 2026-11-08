@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 @main
 struct OpusMacApp: App {
@@ -11,6 +12,7 @@ struct OpusMacApp: App {
                 .preferredColorScheme(themeManager.preferredColorScheme())
                 .tint(themeManager.accent)
                 .environmentObject(themeManager)
+                .background(WindowAppearanceApplier(themeManager: themeManager))
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified(showsTitle: true))
@@ -87,6 +89,36 @@ struct OpusMacApp: App {
                 }
                 .keyboardShortcut(",", modifiers: .command)
             }
+        }
+    }
+}
+
+private struct WindowAppearanceApplier: NSViewRepresentable {
+    let themeManager: ThemeManager
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            apply(to: view)
+        }
+        return view
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            apply(to: nsView)
+        }
+    }
+    private func apply(to view: NSView) {
+        guard let window = view.window else { return }
+        switch themeManager.theme.mode {
+        case .dark, .custom:
+            window.appearance = NSAppearance(named: .darkAqua)
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+        case .light:
+            window.appearance = NSAppearance(named: .aqua)
+            NSApp.appearance = NSAppearance(named: .aqua)
+        case .system:
+            window.appearance = nil
+            NSApp.appearance = nil
         }
     }
 }
