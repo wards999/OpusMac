@@ -89,12 +89,14 @@ struct FileListView: View {
         }
     }
     
-    private func handleDoubleClick(_ item: FileItem) {
+    private func handleClick(_ item: FileItem) {
+        onActivate()
         let now = Date()
-        if lastClickID == item.id && now.timeIntervalSince(lastClickTime) < 0.4 {
+        if lastClickID == item.id && now.timeIntervalSince(lastClickTime) < 0.35 {
             onOpen(item)
             lastClickID = nil
         } else {
+            model.select(item)
             lastClickID = item.id
             lastClickTime = now
         }
@@ -117,7 +119,7 @@ struct FileListView: View {
                         }
                     }
                     .contentShape(Rectangle())
-                    .onTapGesture { handleDoubleClick(item) }
+                    .onTapGesture { handleClick(item) }
                     .draggable(item.url) {
                         Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
                             .padding(4)
@@ -178,7 +180,7 @@ struct FileListView: View {
                         .background(GeometryReader { geo in
                             Color.clear.preference(key: CellFrameKey.self, value: [item.id: geo.frame(in: .named("iconsGrid"))])
                         })
-                        .onTapGesture { handleDoubleClick(item); model.select(item) }
+                        .onTapGesture { handleClick(item) }
                         .draggable(item.url) {
                             FileIconCell(item: item, size: 40, showThumbnail: false, isSelected: false)
                         }
@@ -196,8 +198,9 @@ struct FileListView: View {
                 .coordinateSpace(name: "iconsGrid")
                 .onPreferenceChange(CellFrameKey.self) { cellFrames = $0 }
                 .gesture(
-                    DragGesture(minimumDistance: 8, coordinateSpace: .named("iconsGrid"))
+                    DragGesture(minimumDistance: 6, coordinateSpace: .named("iconsGrid"))
                         .onChanged { value in
+                            onActivate()
                             if dragStart == nil { dragStart = value.startLocation }
                             let start = dragStart ?? value.startLocation
                             let rect = CGRect(
