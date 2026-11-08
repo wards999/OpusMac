@@ -75,10 +75,6 @@ struct FileListView: View {
             if let item = model.selectedFileItems.first { onOpen(item); return .handled }
             return .ignored
         }
-        .onKeyPress("a", modifiers: .command) {
-            model.selectedItems = Set(filteredItems.map(\.id))
-            return .handled
-        }
     }
     
     private func noteSelection(_ item: FileItem) {
@@ -142,6 +138,7 @@ struct FileListView: View {
                 Button("Quick Look") { onQuickLook(item) }
                 Button("Rename") { model.beginRename(item) }
                 Divider()
+                Button("Select All") { model.selectedItems = Set(filteredItems.map(\.id)) }
                 Button("Reveal in Finder") { FileOperations.revealInFinder(model.selectedFileItems) }
                 Button("Move to Trash") {
                     try? FileOperations.moveToTrash(model.selectedFileItems)
@@ -184,6 +181,8 @@ struct FileListView: View {
                             Button("Open") { onOpen(item) }
                             Button("Quick Look") { onQuickLook(item) }
                             Button("Rename") { model.beginRename(item) }
+                            Divider()
+                            Button("Select All") { model.selectedItems = Set(filteredItems.map(\.id)) }
                         }
                     }
                 }
