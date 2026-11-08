@@ -10,8 +10,8 @@ struct FileListView: View {
     var onQuickLook: (FileItem) -> Void
     @State private var filterText = ""
     @FocusState private var renameFocused: Bool
-    @State private var lastClickItem: FileItem.ID?
-    @State private var lastClickTime: Date = .distantPast
+    @State private var lastSelectItem: FileItem.ID?
+    @State private var lastSelectTime: Date = .distantPast
     
     private var filteredItems: [FileItem] {
         guard !filterText.isEmpty else { return model.items }
@@ -74,15 +74,14 @@ struct FileListView: View {
         }
     }
     
-    private func handleClick(_ item: FileItem) {
+    private func noteSelection(_ item: FileItem) {
         let now = Date()
-        if lastClickItem == item.id && now.timeIntervalSince(lastClickTime) < 0.35 {
+        if lastSelectItem == item.id && now.timeIntervalSince(lastSelectTime) < 0.4 {
             onOpen(item)
-            lastClickItem = nil
+            lastSelectItem = nil
         } else {
-            model.select(item)
-            lastClickItem = item.id
-            lastClickTime = now
+            lastSelectItem = item.id
+            lastSelectTime = now
         }
     }
     
@@ -101,13 +100,6 @@ struct FileListView: View {
                         } else {
                             Text(item.name).lineLimit(1)
                         }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { handleClick(item) }
-                    .draggable(item.url) {
-                        Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
-                            .padding(6)
-                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                     }
                 }
                 .width(min: 120, ideal: model.format.width(for: "name"))
@@ -132,6 +124,11 @@ struct FileListView: View {
         .tableStyle(.inset(alternatesRowBackgrounds: true))
         .scrollContentBackground(.hidden)
         .background(themeManager.listBackground)
+        .onChange(of: model.selectedItems) { _, newValue in
+            if let id = newValue.first, let item = model.items.first(where: { $0.id == id }) {
+                noteSelection(item)
+            }
+        }
         .contextMenu {
             if let item = model.selectedFileItems.first {
                 Button("Open") { onOpen(item) }
@@ -160,10 +157,9 @@ struct FileListView: View {
                             showThumbnail: model.format.viewMode == .thumbnails,
                             isSelected: model.selectedItems.contains(item.id)
                         )
-                        .onTapGesture { handleClick(item) }
-                        .draggable(item.url) {
-                            FileIconCell(item: item, size: 48, showThumbnail: false, isSelected: false)
-                                .opacity(0.9)
+                        .onTapGesture {
+                            model.select(item)
+                            noteSelection(item)
                         }
                         .contextMenu {
                             Button("Open") { onOpen(item) }
