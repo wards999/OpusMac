@@ -1,5 +1,7 @@
 import SwiftUI
 
+enum PaneSide { case left, right }
+
 struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var leftTabs = PaneTabManager(initialURL: FileManager.default.homeDirectoryForCurrentUser)
@@ -7,7 +9,7 @@ struct ContentView: View {
         initialURL: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser
     )
-    @State private var activeSide: Side = .left
+    @State private var activeSide: PaneSide = .left
     @State private var treeSelection: URL? = nil
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @State private var showingThemeSettings = false
@@ -18,12 +20,6 @@ struct ContentView: View {
     @State private var showLeftPane = true
     @State private var showRightPane = true
     @State private var viewerItem: FileItem? = nil
-    
-    private enum Side { case left, right }
-    private var activeTabManager: PaneTabManager { activeSide == .left ? leftTabs : rightTabs }
-    private var inactiveTabManager: PaneTabManager { activeSide == .left ? rightTabs : leftTabs }
-    private var activeModel: PaneModel? { activeTabManager.selectedPane }
-    private var inactiveModel: PaneModel? { inactiveTabManager.selectedPane }
     
     var body: some View {
         ContentViewBody(
@@ -49,7 +45,7 @@ private struct ContentViewBody: View {
     @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var leftTabs: PaneTabManager
     @ObservedObject var rightTabs: PaneTabManager
-    @Binding var activeSide: ContentView.Side
+    @Binding var activeSide: PaneSide
     @Binding var treeSelection: URL?
     @Binding var columnVisibility: NavigationSplitViewVisibility
     @Binding var showingThemeSettings: Bool
@@ -246,10 +242,6 @@ private struct NotificationHandlers: ViewModifier {
                 viewerItem = activeModel?.selectedFileItems.first
             }
     }
-}
-
-extension ContentView {
-    enum Side { case left, right }
 }
 
 #Preview {
