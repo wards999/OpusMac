@@ -12,6 +12,9 @@ struct FileListView: View {
     @FocusState private var renameFocused: Bool
     @State private var lastSelectItem: FileItem.ID?
     @State private var lastSelectTime: Date = .distantPast
+    @State private var selectionRect: CGRect? = nil
+    @State private var dragStart: CGPoint? = nil
+    @State private var cellFrames: [FileItem.ID: CGRect] = [:]
     
     private var filteredItems: [FileItem] {
         guard !filterText.isEmpty else { return model.items }
@@ -72,6 +75,10 @@ struct FileListView: View {
             if let item = model.selectedFileItems.first { onOpen(item); return .handled }
             return .ignored
         }
+        .onKeyPress("a", modifiers: .command) {
+            model.selectedItems = Set(filteredItems.map(\.id))
+            return .handled
+        }
     }
     
     private func noteSelection(_ item: FileItem) {
@@ -125,7 +132,7 @@ struct FileListView: View {
         .scrollContentBackground(.hidden)
         .background(themeManager.listBackground)
         .onChange(of: model.selectedItems) { _, newValue in
-            if let id = newValue.first, let item = model.items.first(where: { $0.id == id }) {
+            if newValue.count == 1, let id = newValue.first, let item = model.items.first(where: { $0.id == id }) {
                 noteSelection(item)
             }
         }
@@ -157,9 +164,21 @@ struct FileListView: View {
                             showThumbnail: model.format.viewMode == .thumbnails,
                             isSelected: model.selectedItems.contains(item.id)
                         )
+                        .background(GeometryReader { geo in
+                            Color.clear.preference(key: CellFrameKey.self, value: [item.id: geo.frame(in: .named("iconsGrid"))])
+                        })
                         .onTapGesture {
-                            model.select(item)
-                            noteSelection(item)
+                            if NSEvent.modifierFlags.contains(.command) {
+                                model.toggleSelection(item)
+                            } else if NSEvent.modifierFlags.contains(.shift), let last = model.selectedItems.first,
+                                      let lastIdx = filteredItems.firstIndex(where: { $0.id == last }),
+                                      let thisIdx = filteredItems.firstIndex(where: { $0.id == item.id }) {
+                                let range = min(lastIdx, thisIdx)...max(lastIdx, thisIdx)
+                                model.selectedItems = Set(filteredItems[range].map(\.id))
+                            } else {
+                                model.select(item)
+                                noteSelection(item)
+                            }
                         }
                         .contextMenu {
                             Button("Open") { onOpen(item) }
@@ -170,10 +189,48 @@ struct FileListView: View {
                 }
                 .padding(8)
                 .frame(maxWidth: .infinity)
+                .coordinateSpace(name: "iconsGrid")
+                .onPreferenceChange(CellFrameKey.self) { cellFrames = $0 }
+                .gesture(
+                    DragGesture(minimumDistance: 4, coordinateSpace: .named("iconsGrid"))
+                        .onChanged { value in
+                            if dragStart == nil { dragStart = value.startLocation }
+                            let start = dragStart ?? value.startLocation
+                            let rect = CGRect(
+                                x: min(start.x, value.location.x),
+                                y: min(start.y, value.location.y),
+                                width: abs(value.location.x - start.x),
+                                height: abs(value.location.y - start.y)
+                            )
+                            selectionRect = rect
+                            let hits = cellFrames.filter { $0.value.intersects(rect) }.map(\.key)
+                            model.selectedItems = Set(hits)
+                        }
+                        .onEnded { _ in
+                            dragStart = nil
+                            selectionRect = nil
+                        }
+                )
             }
             .scrollContentBackground(.hidden)
+            
+            if let rect = selectionRect {
+                Rectangle()
+                    .stroke(themeManager.accent, lineWidth: 1)
+                    .background(themeManager.accent.opacity(0.12))
+                    .frame(width: rect.width, height: rect.height)
+                    .position(x: rect.midX, y: rect.midY)
+                    .allowsHitTesting(false)
+            }
         }
         .background(themeManager.listBackground)
+    }
+}
+
+private struct CellFrameKey: PreferenceKey {
+    static var defaultValue: [FileItem.ID: CGRect] = [:]
+    static func reduce(value: inout [FileItem.ID: CGRect], nextValue: () -> [FileItem.ID: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
     }
 }
 
