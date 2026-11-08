@@ -18,27 +18,29 @@ final class PaneModel: ObservableObject, Identifiable {
     
     init(url: URL = FileManager.default.homeDirectoryForCurrentUser) {
         self.currentURL = url
+        history = [url]
+        historyIndex = 0
         Task { await loadDirectory(saveCurrentFormat: false) }
     }
     
     func navigate(to url: URL) {
-        if ArchiveBrowser.isArchive(url) {
-            archiveURL = url
-            currentURL = url
+        let target = url.standardizedFileURL
+        if ArchiveBrowser.isArchive(target) {
+            archiveURL = target
+            currentURL = target
             selectedItems.removeAll()
             Task { await loadArchive() }
             return
         }
         archiveURL = nil
-        guard url != currentURL else { return }
-        // Auto-save format for the folder we're leaving
+        guard target.path != currentURL.path else { return }
         Task { await FormatStore.shared.save(format, for: currentURL.path) }
         if historyIndex < history.count - 1 {
             history = Array(history.prefix(historyIndex + 1))
         }
-        history.append(currentURL)
-        historyIndex = history.count
-        currentURL = url
+        history.append(target)
+        historyIndex = history.count - 1
+        currentURL = target
         selectedItems.removeAll()
         Task { await loadDirectory(saveCurrentFormat: false) }
     }
@@ -76,7 +78,13 @@ final class PaneModel: ObservableObject, Identifiable {
             return
         }
         let parent = currentURL.deletingLastPathComponent()
-        if parent.path != currentURL.path { navigate(to: parent) }
+        if parent.path != currentURL.path {
+            navigate(to: parent)
+        }
+    }
+    
+    func goHome() {
+        navigate(to: FileManager.default.homeDirectoryForCurrentUser)
     }
     
     var canGoBack: Bool { historyIndex > 0 }
@@ -154,7 +162,6 @@ final class PaneModel: ObservableObject, Identifiable {
         }
     }
     
-    /// Auto-save the current format for this folder. Called whenever the user changes view mode, columns, sort, etc.
     private func autoSaveFormat() {
         Task { await FormatStore.shared.save(format, for: currentURL.path) }
     }
