@@ -6,13 +6,15 @@ struct ThemeSettingsView: View {
     
     var body: some View {
         Form {
-            Section("Appearance") {
-                Picker("Theme", selection: $themeManager.theme.mode) {
+            Section("Theme") {
+                Picker("Preset", selection: Binding(
+                    get: { themeManager.theme.mode },
+                    set: { themeManager.applyPreset($0) }
+                )) {
                     ForEach(ThemeMode.allCases) { mode in
                         Text(mode.displayName).tag(mode)
                     }
                 }
-                .pickerStyle(.segmented)
             }
             Section("Colors") {
                 ColorPicker("Accent Color", selection: Binding(
@@ -38,7 +40,7 @@ struct ThemeSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 380, height: 340)
+        .frame(width: 400, height: 420)
         .navigationTitle("Theme")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
