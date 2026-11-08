@@ -17,11 +17,13 @@ struct FolderTreeView: View {
         )) {
             ForEach(rootNodes) { node in
                 TreeNodeView(node: node, expanded: $expanded, selectedURL: $selectedURL, onSelect: onSelect)
+                    .listRowBackground(themeManager.paneBackground)
             }
         }
-        .listStyle(.sidebar)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(themeManager.paneBackground)
+        .foregroundStyle(themeManager.theme.textColor.color)
         .onAppear { loadRoots() }
     }
     
@@ -63,6 +65,7 @@ struct TreeNode: Identifiable, Hashable {
 }
 
 struct TreeNodeView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let node: TreeNode
     @Binding var expanded: Set<URL>
     @Binding var selectedURL: URL?
@@ -82,9 +85,11 @@ struct TreeNodeView: View {
         )) {
             ForEach(children) { child in
                 TreeNodeView(node: child, expanded: $expanded, selectedURL: $selectedURL, onSelect: onSelect)
+                    .listRowBackground(themeManager.paneBackground)
             }
         } label: {
             Label(node.name, systemImage: "folder")
+                .foregroundStyle(themeManager.theme.textColor.color)
                 .onTapGesture { selectedURL = node.url; onSelect(node.url) }
         }
     }

@@ -66,6 +66,10 @@ struct FileListView: View {
             if let item = model.selectedFileItems.first { onQuickLook(item); return .handled }
             return .ignored
         }
+        .onKeyPress(.return) {
+            if let item = model.selectedFileItems.first { onOpen(item); return .handled }
+            return .ignored
+        }
     }
     
     private var detailsView: some View {
@@ -84,6 +88,8 @@ struct FileListView: View {
                             Text(item.name).lineLimit(1)
                         }
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { onOpen(item) }
                 }
                 .width(min: 120, ideal: model.format.width(for: "name"))
             }
@@ -106,9 +112,6 @@ struct FileListView: View {
         }
         .tableStyle(.inset(alternatesRowBackgrounds: true))
         .onChange(of: model.selectedItems) { _, _ in onActivate() }
-        .onTapGesture(count: 2) {
-            if let item = model.selectedFileItems.first { onOpen(item) }
-        }
         .contextMenu {
             if let item = model.selectedFileItems.first {
                 Button("Open") { onOpen(item) }
