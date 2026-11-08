@@ -49,10 +49,12 @@ struct PaneView: View {
                     Picker("", selection: Binding(get: { model.format.viewMode }, set: { model.setViewMode($0) })) {
                         ForEach(ViewMode.allCases) { mode in
                             Label(mode.displayName, systemImage: mode.iconName)
-                                .labelStyle(.iconOnly).help(mode.displayName).tag(mode)
+                                .help(mode.displayName)
+                                .tag(mode)
                         }
                     }
-                    .pickerStyle(.segmented).frame(width: 110)
+                    .pickerStyle(.segmented)
+                    .frame(width: 220)
                     if let onSwap {
                         Button { onSwap() } label: {
                             Image(systemName: "arrow.left.arrow.right")

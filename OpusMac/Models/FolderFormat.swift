@@ -2,26 +2,26 @@ import Foundation
 
 enum ViewMode: String, Codable, CaseIterable, Identifiable {
     case details
-    case icons
     case list
+    case icons
     case thumbnails
     
     var id: String { rawValue }
     
     var displayName: String {
         switch self {
-        case .details:     return "Details"
-        case .icons:       return "Icons"
+        case .details:     return "Columns"
         case .list:        return "List"
-        case .thumbnails:  return "Thumbnails"
+        case .icons:       return "Icons"
+        case .thumbnails:  return "Thumbs"
         }
     }
     
     var iconName: String {
         switch self {
         case .details:     return "list.bullet.rectangle"
-        case .icons:       return "square.grid.2x2"
         case .list:        return "list.bullet"
+        case .icons:       return "square.grid.2x2"
         case .thumbnails:  return "photo.on.rectangle"
         }
     }
