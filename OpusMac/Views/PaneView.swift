@@ -13,6 +13,12 @@ struct PaneView: View {
     @State private var showBatchRename = false
     private var model: PaneModel? { tabManager.selectedPane }
     
+    private var pathBarBackground: Color {
+        isActive
+            ? themeManager.accent.opacity(0.35)
+            : themeManager.paneBackground.opacity(0.9)
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             if let model {
@@ -37,7 +43,6 @@ struct PaneView: View {
                         }
                     }
                     .pickerStyle(.segmented).frame(width: 110)
-                    // Swap panes <> and close X (Opus style)
                     if let onSwap {
                         Button { onSwap() } label: {
                             Image(systemName: "arrow.left.arrow.right")
@@ -66,12 +71,14 @@ struct PaneView: View {
                     .menuStyle(.borderlessButton).frame(width: 22)
                 }
                 .padding(.horizontal, 6).padding(.vertical, 3)
-                .background(isActive ? Color(red: 0.18, green: 0.32, blue: 0.55) : Color(red: 0.16, green: 0.16, blue: 0.17))
+                .foregroundStyle(themeManager.theme.textColor.color)
+                .background(pathBarBackground)
                 .contentShape(Rectangle())
                 .onTapGesture { onActivate() }
                 Divider()
                 
                 ZStack {
+                    themeManager.listBackground
                     FileListView(model: model, isActive: isActive, onActivate: onActivate,
                         onOpen: { item in
                             if item.isDirectory { model.navigate(to: item.url) }
@@ -119,11 +126,11 @@ struct PaneView: View {
                 HStack(spacing: 8) {
                     Text("\(model.items.count) items")
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(themeManager.theme.secondaryTextColor.color)
                     if !model.selectedItems.isEmpty {
                         Text("\(model.selectedItems.count) selected")
                             .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeManager.theme.secondaryTextColor.color)
                     }
                     Spacer()
                     if isTargeted {
@@ -133,7 +140,7 @@ struct PaneView: View {
                     }
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(Color(red: 0.10, green: 0.10, blue: 0.11))
+                .background(themeManager.paneBackground)
             } else {
                 ContentUnavailableView("No Tab", systemImage: "tab")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

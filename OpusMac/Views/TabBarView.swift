@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct TabBarView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var manager: PaneTabManager
     var isActive: Bool
     
     var body: some View {
         HStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 0) {
+                HStack(spacing: 1) {
                     ForEach(manager.tabs) { tab in
                         TabItemView(
                             tab: tab,
@@ -24,18 +25,20 @@ struct TabBarView: View {
             Button { manager.addTab() } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(themeManager.theme.secondaryTextColor.color)
                     .frame(width: 18, height: 18)
             }
             .buttonStyle(.borderless)
             .help("New Tab")
             .padding(.trailing, 4)
         }
-        .frame(height: 26)
-        .background(Color(red: 0.09, green: 0.09, blue: 0.10))
+        .frame(height: 24)
+        .background(themeManager.paneBackground)
     }
 }
 
 struct TabItemView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @ObservedObject var tab: TabModel
     let isSelected: Bool
     let isActivePane: Bool
@@ -47,20 +50,21 @@ struct TabItemView: View {
         HStack(spacing: 4) {
             Image(systemName: "folder.fill")
                 .font(.system(size: 8))
-                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                .foregroundStyle(isSelected ? themeManager.accent : themeManager.theme.secondaryTextColor.color)
             Text(tab.title)
                 .font(.system(size: 11, weight: isSelected ? .medium : .regular))
+                .foregroundStyle(themeManager.theme.textColor.color)
                 .lineLimit(1)
             if isSelected || isHovering {
                 Button { onClose() } label: {
                     Image(systemName: "xmark").font(.system(size: 7, weight: .bold))
                 }
                 .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeManager.theme.secondaryTextColor.color)
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
         .background(
             RoundedRectangle(cornerRadius: 3)
                 .fill(backgroundColor)
@@ -73,8 +77,8 @@ struct TabItemView: View {
     
     private var backgroundColor: Color {
         if isSelected {
-            return isActivePane ? Color.accentColor.opacity(0.22) : Color.white.opacity(0.08)
+            return isActivePane ? themeManager.accent.opacity(0.25) : themeManager.theme.textColor.color.opacity(0.08)
         }
-        return isHovering ? Color.white.opacity(0.05) : Color.clear
+        return isHovering ? themeManager.theme.textColor.color.opacity(0.05) : Color.clear
     }
 }

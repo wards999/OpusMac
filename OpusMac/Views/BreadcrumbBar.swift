@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct BreadcrumbBar: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let url: URL
     var onNavigate: (URL) -> Void
     
@@ -27,7 +28,8 @@ struct BreadcrumbBar: View {
             if isEditing {
                 TextField("Path", text: $editText)
                     .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(themeManager.theme.textColor.color)
                     .focused($pathFocused)
                     .onSubmit { commitEdit() }
                     .onExitCommand { isEditing = false }
@@ -37,29 +39,30 @@ struct BreadcrumbBar: View {
                     }
                 Button("Go") { commitEdit() }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                 Button("Cancel") { isEditing = false }
                     .buttonStyle(.borderless)
-                    .controlSize(.small)
+                    .controlSize(.mini)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 0) {
                         ForEach(Array(components.enumerated()), id: \.offset) { index, item in
                             if index > 0 {
                                 Image(systemName: "chevron.right")
-                                    .font(.system(size: 8, weight: .semibold))
-                                    .foregroundStyle(.tertiary)
-                                    .padding(.horizontal, 2)
+                                    .font(.system(size: 7, weight: .semibold))
+                                    .foregroundStyle(themeManager.theme.secondaryTextColor.color)
+                                    .padding(.horizontal, 1)
                             }
                             Button { onNavigate(item.url) } label: {
                                 Text(item.name)
                                     .font(.system(size: 11, weight: index == components.count - 1 ? .semibold : .regular))
+                                    .foregroundStyle(themeManager.theme.textColor.color)
                                     .lineLimit(1)
-                                    .padding(.horizontal, 5)
-                                    .padding(.vertical, 3)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(index == components.count - 1 ? Color.accentColor.opacity(0.15) : Color.clear)
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .fill(index == components.count - 1 ? themeManager.accent.opacity(0.2) : Color.clear)
                                     )
                             }
                             .buttonStyle(.plain)
@@ -67,20 +70,17 @@ struct BreadcrumbBar: View {
                         }
                     }
                 }
-                Spacer(minLength: 4)
                 Button { isEditing = true } label: {
                     Image(systemName: "pencil")
-                        .font(.system(size: 10))
+                        .font(.system(size: 9))
+                        .foregroundStyle(themeManager.theme.secondaryTextColor.color)
                 }
                 .buttonStyle(.borderless)
                 .help("Edit path")
             }
         }
-        .padding(.horizontal, 4)
-        .padding(.vertical, 2)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .onTapGesture(count: 2) { isEditing = true }
+        .padding(.horizontal, 2)
+        .padding(.vertical, 1)
     }
     
     private func commitEdit() {
