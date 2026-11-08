@@ -110,10 +110,10 @@ private struct WindowAppearanceApplier: NSViewRepresentable {
     private func apply(to view: NSView) {
         guard let window = view.window else { return }
         switch themeManager.theme.mode {
-        case .dark, .custom:
+        case .dark, .custom, .dracula, .vscodeDark:
             window.appearance = NSAppearance(named: .darkAqua)
             NSApp.appearance = NSAppearance(named: .darkAqua)
-        case .light:
+        case .light, .vscodeLight, .solarizedLight:
             window.appearance = NSAppearance(named: .aqua)
             NSApp.appearance = NSAppearance(named: .aqua)
         case .system:
