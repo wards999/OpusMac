@@ -95,25 +95,9 @@ private struct ContentViewBody: View {
     }
     
     private var sidebar: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 6) {
-                ForEach(["Home", "Desktop", "Documents", "Downloads"], id: \.self) { name in
-                    Button(name) {
-                        let home = FileManager.default.homeDirectoryForCurrentUser
-                        let url = name == "Home" ? home : home.appendingPathComponent(name)
-                        activeModel?.navigate(to: url)
-                    }.buttonStyle(.borderless).font(.caption)
-                    .foregroundStyle(themeManager.theme.textColor.color)
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 8).padding(.vertical, 4)
+        FolderTreeView(selectedURL: $treeSelection) { url in activeModel?.navigate(to: url) }
             .background(themeManager.paneBackground)
-            Divider()
-            FolderTreeView(selectedURL: $treeSelection) { url in activeModel?.navigate(to: url) }
-        }
-        .background(themeManager.paneBackground)
-        .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
+            .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
     }
     
     private var mainSplit: some View {

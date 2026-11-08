@@ -10,11 +10,11 @@ struct FileListView: View {
     var onQuickLook: (FileItem) -> Void
     @State private var filterText = ""
     @FocusState private var renameFocused: Bool
-    @State private var lastSelectItem: FileItem.ID?
-    @State private var lastSelectTime: Date = .distantPast
     @State private var selectionRect: CGRect? = nil
     @State private var dragStart: CGPoint? = nil
     @State private var cellFrames: [FileItem.ID: CGRect] = [:]
+    @State private var lastClickID: FileItem.ID?
+    @State private var lastClickTime = Date.distantPast
     
     private var filteredItems: [FileItem] {
         guard !filterText.isEmpty else { return model.items }
@@ -51,6 +51,18 @@ struct FileListView: View {
                 )) {
                     model.rememberCurrentFormat()
                 }
+                if model.format.viewMode == .thumbnails {
+                    Slider(value: Binding(
+                        get: { model.format.thumbnailSize },
+                        set: { newSize in
+                            var f = model.format
+                            f.thumbnailSize = newSize
+                            model.updateFormat(f)
+                        }
+                    ), in: 48...200)
+                    .frame(width: 100)
+                    .help("Thumbnail size")
+                }
             }
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(themeManager.listBackground)
@@ -77,14 +89,14 @@ struct FileListView: View {
         }
     }
     
-    private func noteSelection(_ item: FileItem) {
+    private func handleDoubleClick(_ item: FileItem) {
         let now = Date()
-        if lastSelectItem == item.id && now.timeIntervalSince(lastSelectTime) < 0.4 {
+        if lastClickID == item.id && now.timeIntervalSince(lastClickTime) < 0.4 {
             onOpen(item)
-            lastSelectItem = nil
+            lastClickID = nil
         } else {
-            lastSelectItem = item.id
-            lastSelectTime = now
+            lastClickID = item.id
+            lastClickTime = now
         }
     }
     
@@ -103,6 +115,13 @@ struct FileListView: View {
                         } else {
                             Text(item.name).lineLimit(1)
                         }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { handleDoubleClick(item) }
+                    .draggable(item.url) {
+                        Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
+                            .padding(4)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 4))
                     }
                 }
                 .width(min: 120, ideal: model.format.width(for: "name"))
@@ -127,11 +146,6 @@ struct FileListView: View {
         .tableStyle(.inset(alternatesRowBackgrounds: true))
         .scrollContentBackground(.hidden)
         .background(themeManager.listBackground)
-        .onChange(of: model.selectedItems) { _, newValue in
-            if newValue.count == 1, let id = newValue.first, let item = model.items.first(where: { $0.id == id }) {
-                noteSelection(item)
-            }
-        }
         .contextMenu {
             if let item = model.selectedFileItems.first {
                 Button("Open") { onOpen(item) }
@@ -164,18 +178,9 @@ struct FileListView: View {
                         .background(GeometryReader { geo in
                             Color.clear.preference(key: CellFrameKey.self, value: [item.id: geo.frame(in: .named("iconsGrid"))])
                         })
-                        .onTapGesture {
-                            if NSEvent.modifierFlags.contains(.command) {
-                                model.toggleSelection(item)
-                            } else if NSEvent.modifierFlags.contains(.shift), let last = model.selectedItems.first,
-                                      let lastIdx = filteredItems.firstIndex(where: { $0.id == last }),
-                                      let thisIdx = filteredItems.firstIndex(where: { $0.id == item.id }) {
-                                let range = min(lastIdx, thisIdx)...max(lastIdx, thisIdx)
-                                model.selectedItems = Set(filteredItems[range].map(\.id))
-                            } else {
-                                model.select(item)
-                                noteSelection(item)
-                            }
+                        .onTapGesture { handleDoubleClick(item); model.select(item) }
+                        .draggable(item.url) {
+                            FileIconCell(item: item, size: 40, showThumbnail: false, isSelected: false)
                         }
                         .contextMenu {
                             Button("Open") { onOpen(item) }
@@ -191,7 +196,7 @@ struct FileListView: View {
                 .coordinateSpace(name: "iconsGrid")
                 .onPreferenceChange(CellFrameKey.self) { cellFrames = $0 }
                 .gesture(
-                    DragGesture(minimumDistance: 4, coordinateSpace: .named("iconsGrid"))
+                    DragGesture(minimumDistance: 8, coordinateSpace: .named("iconsGrid"))
                         .onChanged { value in
                             if dragStart == nil { dragStart = value.startLocation }
                             let start = dragStart ?? value.startLocation
