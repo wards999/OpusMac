@@ -38,6 +38,7 @@ struct ContentView: View {
             viewerItem: $viewerItem
         )
         .environmentObject(themeManager)
+        .preferredColorScheme(themeManager.preferredColorScheme())
     }
 }
 
@@ -90,6 +91,7 @@ private struct ContentViewBody: View {
         } detail: {
             mainSplit
         }
+        .background(themeManager.paneBackground)
     }
     
     private var sidebar: some View {
@@ -101,6 +103,7 @@ private struct ContentViewBody: View {
                         let url = name == "Home" ? home : home.appendingPathComponent(name)
                         activeModel?.navigate(to: url)
                     }.buttonStyle(.borderless).font(.caption)
+                    .foregroundStyle(themeManager.theme.textColor.color)
                 }
                 Spacer()
             }
@@ -163,10 +166,6 @@ private struct ContentViewBody: View {
     
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItemGroup(placement: .navigation) {
-            Text(activeSide == .left ? "Left \u{2192} Right" : "Right \u{2192} Left")
-                .font(.caption).foregroundStyle(.secondary)
-        }
         ToolbarItemGroup(placement: .primaryAction) {
             Button {
                 if let src = activeModel, let dst = inactiveModel { OpusCommands.copyToOtherPane(from: src, to: dst) }

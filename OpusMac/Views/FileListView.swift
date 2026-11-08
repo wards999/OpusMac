@@ -48,7 +48,7 @@ struct FileListView: View {
                 }
             }
             .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(themeManager.listBackground.opacity(0.8))
+            .background(themeManager.listBackground)
             
             Group {
                 switch model.format.viewMode {
@@ -62,6 +62,7 @@ struct FileListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(themeManager.listBackground)
+        .preferredColorScheme(themeManager.preferredColorScheme())
         .onKeyPress(.space) {
             if let item = model.selectedFileItems.first { onQuickLook(item); return .handled }
             return .ignored
@@ -111,7 +112,8 @@ struct FileListView: View {
             }
         }
         .tableStyle(.inset(alternatesRowBackgrounds: true))
-        .onChange(of: model.selectedItems) { _, _ in onActivate() }
+        .scrollContentBackground(.hidden)
+        .background(themeManager.listBackground)
         .contextMenu {
             if let item = model.selectedFileItems.first {
                 Button("Open") { onOpen(item) }
@@ -129,32 +131,35 @@ struct FileListView: View {
     
     private var iconsView: some View {
         let size = model.format.viewMode == .thumbnails ? model.format.thumbnailSize : 64
-        return ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: size + 40, maximum: size + 80))], spacing: 12) {
-                ForEach(filteredItems) { item in
-                    FileIconCell(
-                        item: item,
-                        size: size,
-                        showThumbnail: model.format.viewMode == .thumbnails,
-                        isSelected: model.selectedItems.contains(item.id)
-                    )
-                    .onTapGesture(count: 2) { onOpen(item) }
-                    .onTapGesture {
-                        onActivate()
-                        if NSEvent.modifierFlags.contains(.command) { model.toggleSelection(item) }
-                        else { model.select(item) }
-                    }
-                    .contextMenu {
-                        Button("Open") { onOpen(item) }
-                        Button("Quick Look") { onQuickLook(item) }
-                        Button("Rename") { model.beginRename(item) }
+        return ZStack {
+            themeManager.listBackground
+                .ignoresSafeArea()
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: size + 40, maximum: size + 80))], spacing: 12) {
+                    ForEach(filteredItems) { item in
+                        FileIconCell(
+                            item: item,
+                            size: size,
+                            showThumbnail: model.format.viewMode == .thumbnails,
+                            isSelected: model.selectedItems.contains(item.id)
+                        )
+                        .onTapGesture(count: 2) { onOpen(item) }
+                        .onTapGesture {
+                            if NSEvent.modifierFlags.contains(.command) { model.toggleSelection(item) }
+                            else { model.select(item) }
+                        }
+                        .contextMenu {
+                            Button("Open") { onOpen(item) }
+                            Button("Quick Look") { onQuickLook(item) }
+                            Button("Rename") { model.beginRename(item) }
+                        }
                     }
                 }
+                .padding(8)
+                .frame(maxWidth: .infinity)
             }
-            .padding(8)
-            .frame(maxWidth: .infinity, minHeight: 0)
+            .scrollContentBackground(.hidden)
         }
-        .scrollContentBackground(.hidden)
         .background(themeManager.listBackground)
     }
 }

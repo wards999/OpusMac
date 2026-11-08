@@ -8,22 +8,29 @@ struct FolderTreeView: View {
     @State private var expanded: Set<URL> = []
     
     var body: some View {
-        List(selection: Binding(
-            get: { selectedURL },
-            set: { newValue in
-                selectedURL = newValue
-                if let url = newValue { onSelect(url) }
+        ZStack {
+            themeManager.paneBackground
+                .ignoresSafeArea()
+            List(selection: Binding(
+                get: { selectedURL },
+                set: { newValue in
+                    selectedURL = newValue
+                    if let url = newValue { onSelect(url) }
+                }
+            )) {
+                ForEach(rootNodes) { node in
+                    TreeNodeView(node: node, expanded: $expanded, selectedURL: $selectedURL, onSelect: onSelect)
+                        .listRowBackground(themeManager.paneBackground)
+                        .listRowSeparator(.hidden)
+                }
             }
-        )) {
-            ForEach(rootNodes) { node in
-                TreeNodeView(node: node, expanded: $expanded, selectedURL: $selectedURL, onSelect: onSelect)
-                    .listRowBackground(themeManager.paneBackground)
-            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(themeManager.paneBackground)
+            .foregroundStyle(themeManager.theme.textColor.color)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(themeManager.paneBackground)
-        .foregroundStyle(themeManager.theme.textColor.color)
+        .preferredColorScheme(themeManager.preferredColorScheme())
         .onAppear { loadRoots() }
     }
     
@@ -92,5 +99,6 @@ struct TreeNodeView: View {
                 .foregroundStyle(themeManager.theme.textColor.color)
                 .onTapGesture { selectedURL = node.url; onSelect(node.url) }
         }
+        .listRowBackground(themeManager.paneBackground)
     }
 }
