@@ -104,6 +104,11 @@ struct FileListView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture { handleClick(item) }
+                    .draggable(item.url) {
+                        Label(item.name, systemImage: item.isDirectory ? "folder" : "doc")
+                            .padding(6)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    }
                 }
                 .width(min: 120, ideal: model.format.width(for: "name"))
             }
@@ -156,6 +161,10 @@ struct FileListView: View {
                             isSelected: model.selectedItems.contains(item.id)
                         )
                         .onTapGesture { handleClick(item) }
+                        .draggable(item.url) {
+                            FileIconCell(item: item, size: 48, showThumbnail: false, isSelected: false)
+                                .opacity(0.9)
+                        }
                         .contextMenu {
                             Button("Open") { onOpen(item) }
                             Button("Quick Look") { onQuickLook(item) }
