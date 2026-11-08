@@ -26,43 +26,74 @@ struct ContentView: View {
     private var inactiveModel: PaneModel? { inactiveTabManager.selectedPane }
     
     var body: some View {
+        ContentViewBody(
+            leftTabs: leftTabs,
+            rightTabs: rightTabs,
+            activeSide: $activeSide,
+            treeSelection: $treeSelection,
+            columnVisibility: $columnVisibility,
+            showingThemeSettings: $showingThemeSettings,
+            showingSynchronize: $showingSynchronize,
+            showingFormatPatterns: $showingFormatPatterns,
+            showingSettings: $showingSettings,
+            showViewer: $showViewer,
+            showLeftPane: $showLeftPane,
+            showRightPane: $showRightPane,
+            viewerItem: $viewerItem
+        )
+        .environmentObject(themeManager)
+    }
+}
+
+private struct ContentViewBody: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @ObservedObject var leftTabs: PaneTabManager
+    @ObservedObject var rightTabs: PaneTabManager
+    @Binding var activeSide: ContentView.Side
+    @Binding var treeSelection: URL?
+    @Binding var columnVisibility: NavigationSplitViewVisibility
+    @Binding var showingThemeSettings: Bool
+    @Binding var showingSynchronize: Bool
+    @Binding var showingFormatPatterns: Bool
+    @Binding var showingSettings: Bool
+    @Binding var showViewer: Bool
+    @Binding var showLeftPane: Bool
+    @Binding var showRightPane: Bool
+    @Binding var viewerItem: FileItem?
+    
+    private var activeTabManager: PaneTabManager { activeSide == .left ? leftTabs : rightTabs }
+    private var inactiveTabManager: PaneTabManager { activeSide == .left ? rightTabs : leftTabs }
+    private var activeModel: PaneModel? { activeTabManager.selectedPane }
+    private var inactiveModel: PaneModel? { inactiveTabManager.selectedPane }
+    
+    var body: some View {
+        splitView
+            .background(themeManager.paneBackground)
+            .overlay { overlayContent }
+            .modifier(NotificationHandlers(
+                leftTabs: leftTabs,
+                rightTabs: rightTabs,
+                activeModel: activeModel,
+                inactiveModel: inactiveModel,
+                showingThemeSettings: $showingThemeSettings,
+                showingSynchronize: $showingSynchronize,
+                showingFormatPatterns: $showingFormatPatterns,
+                showingSettings: $showingSettings,
+                viewerItem: $viewerItem
+            ))
+            .sheet(isPresented: $showingThemeSettings) { ThemeSettingsView().environmentObject(themeManager) }
+            .sheet(isPresented: $showingSynchronize) { syncSheet }
+            .sheet(isPresented: $showingFormatPatterns) { FormatPatternsView() }
+            .sheet(isPresented: $showingSettings) { SettingsView().environmentObject(themeManager) }
+            .toolbar { toolbarContent }
+    }
+    
+    private var splitView: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             sidebar
         } detail: {
             mainSplit
         }
-        .background(themeManager.paneBackground)
-        .overlay { overlays }
-        .onReceive(NotificationCenter.default.publisher(for: .goBack)) { _ in activeModel?.goBack() }
-        .onReceive(NotificationCenter.default.publisher(for: .goForward)) { _ in activeModel?.goForward() }
-        .onReceive(NotificationCenter.default.publisher(for: .goUp)) { _ in activeModel?.goUp() }
-        .onReceive(NotificationCenter.default.publisher(for: .rememberFormat)) { _ in activeModel?.rememberCurrentFormat() }
-        .onReceive(NotificationCenter.default.publisher(for: .clearFormat)) { _ in activeModel?.clearFormat() }
-        .onReceive(NotificationCenter.default.publisher(for: .filesDidChange)) { _ in
-            leftTabs.selectedPane?.navigate(to: leftTabs.selectedPane?.currentURL ?? URL(fileURLWithPath: "/"))
-            rightTabs.selectedPane?.navigate(to: rightTabs.selectedPane?.currentURL ?? URL(fileURLWithPath: "/"))
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openThemeSettings)) { _ in showingThemeSettings = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openSynchronize)) { _ in showingSynchronize = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openFormatPatterns)) { _ in showingFormatPatterns = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in showingSettings = true }
-        .onReceive(NotificationCenter.default.publisher(for: .copyToOtherPane)) { _ in
-            if let src = activeModel, let dst = inactiveModel { OpusCommands.copyToOtherPane(from: src, to: dst) }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .moveToOtherPane)) { _ in
-            if let src = activeModel, let dst = inactiveModel { OpusCommands.moveToOtherPane(from: src, to: dst) }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .swapPanes)) { _ in
-            leftTabs.swapContents(with: rightTabs)
-        }
-        .onChange(of: leftTabs.selectedPane?.selectedItems) { _, _ in updateViewer() }
-        .onChange(of: rightTabs.selectedPane?.selectedItems) { _, _ in updateViewer() }
-        .onChange(of: activeSide) { _, _ in updateViewer() }
-        .sheet(isPresented: $showingThemeSettings) { ThemeSettingsView().environmentObject(themeManager) }
-        .sheet(isPresented: $showingSynchronize) { syncSheet }
-        .sheet(isPresented: $showingFormatPatterns) { FormatPatternsView() }
-        .sheet(isPresented: $showingSettings) { SettingsView().environmentObject(themeManager) }
-        .toolbar { toolbarContent }
     }
     
     private var sidebar: some View {
@@ -118,7 +149,7 @@ struct ContentView: View {
         }
     }
     
-    private var overlays: some View {
+    private var overlayContent: some View {
         ZStack {
             VStack { Spacer(); TransferProgressView().padding() }
             ConflictDialogView()
@@ -171,8 +202,54 @@ struct ContentView: View {
             Button { showingSettings = true } label: { Label("Settings", systemImage: "gear") }
         }
     }
+}
+
+private struct NotificationHandlers: ViewModifier {
+    let leftTabs: PaneTabManager
+    let rightTabs: PaneTabManager
+    let activeModel: PaneModel?
+    let inactiveModel: PaneModel?
+    @Binding var showingThemeSettings: Bool
+    @Binding var showingSynchronize: Bool
+    @Binding var showingFormatPatterns: Bool
+    @Binding var showingSettings: Bool
+    @Binding var viewerItem: FileItem?
     
-    private func updateViewer() { viewerItem = activeModel?.selectedFileItems.first }
+    func body(content: Content) -> some View {
+        content
+            .onReceive(NotificationCenter.default.publisher(for: .goBack)) { _ in activeModel?.goBack() }
+            .onReceive(NotificationCenter.default.publisher(for: .goForward)) { _ in activeModel?.goForward() }
+            .onReceive(NotificationCenter.default.publisher(for: .goUp)) { _ in activeModel?.goUp() }
+            .onReceive(NotificationCenter.default.publisher(for: .rememberFormat)) { _ in activeModel?.rememberCurrentFormat() }
+            .onReceive(NotificationCenter.default.publisher(for: .clearFormat)) { _ in activeModel?.clearFormat() }
+            .onReceive(NotificationCenter.default.publisher(for: .filesDidChange)) { _ in
+                leftTabs.selectedPane?.navigate(to: leftTabs.selectedPane?.currentURL ?? URL(fileURLWithPath: "/"))
+                rightTabs.selectedPane?.navigate(to: rightTabs.selectedPane?.currentURL ?? URL(fileURLWithPath: "/"))
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openThemeSettings)) { _ in showingThemeSettings = true }
+            .onReceive(NotificationCenter.default.publisher(for: .openSynchronize)) { _ in showingSynchronize = true }
+            .onReceive(NotificationCenter.default.publisher(for: .openFormatPatterns)) { _ in showingFormatPatterns = true }
+            .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in showingSettings = true }
+            .onReceive(NotificationCenter.default.publisher(for: .copyToOtherPane)) { _ in
+                if let src = activeModel, let dst = inactiveModel { OpusCommands.copyToOtherPane(from: src, to: dst) }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .moveToOtherPane)) { _ in
+                if let src = activeModel, let dst = inactiveModel { OpusCommands.moveToOtherPane(from: src, to: dst) }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .swapPanes)) { _ in
+                leftTabs.swapContents(with: rightTabs)
+            }
+            .onChange(of: leftTabs.selectedPane?.selectedItems) { _, _ in
+                viewerItem = activeModel?.selectedFileItems.first
+            }
+            .onChange(of: rightTabs.selectedPane?.selectedItems) { _, _ in
+                viewerItem = activeModel?.selectedFileItems.first
+            }
+    }
+}
+
+extension ContentView {
+    enum Side { case left, right }
 }
 
 #Preview {
